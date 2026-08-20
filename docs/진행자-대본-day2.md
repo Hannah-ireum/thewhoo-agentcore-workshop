@@ -5,7 +5,7 @@
 
 ## ⚠️ 진행 전 필수 확인 — CLI
 
-Day 2 는 AWS 공식 권장 도구인 **AgentCore CLI**(`@aws/agentcore`, npm)를 사용합니다. 이전 버전 워크샵의 Python starter-toolkit 은 AWS 가 지원 종료를 공지했습니다.
+Day 2 는 공식 문서가 안내하는 **AgentCore CLI**(`@aws/agentcore`, npm)를 사용합니다. AgentCore CLI 는 2026-02 public preview → 2026-03 GA(v0.4.0) 로 출시됐습니다 (release notes 확인). 구 Python starter-toolkit 은 실행 시 "no longer supported" 배너를 내보냅니다 — 단 이 문구는 **도구가 출력하는 안내**이고 devguide release notes 에 공식 지원 종료 공지는 없습니다.
 
 **진행자가 확인할 것 (실습 시작 전에 한 번):**
 
@@ -22,7 +22,7 @@ Code Editor 에는 Node.js 가 기본 포함돼 있습니다 (검증 시 v20.19.
 > CLI 만 Node 로 배포됩니다. 에이전트 코드는 그대로 Python 입니다. CLI 가 AWS CDK 를 내부적으로 쓰기 때문입니다.
 >
 > **Q. 예전 자료에는 `agentcore configure` 가 있는데요.**
-> 구 starter-toolkit 명령입니다. 지원 종료됐고 신규 기능이 안 들어옵니다. 명령 대응표는 [새 CLI 이전 가이드](새-cli-이전-가이드.md) 에 있습니다.
+> 구 starter-toolkit 명령입니다. 그 도구가 "신규 기능은 AgentCore CLI 에만 들어온다" 고 안내하고 있고, 공식 Get started 문서도 AgentCore CLI 를 가리킵니다. 명령 대응표는 [새 CLI 이전 가이드](새-cli-이전-가이드.md) 에 있습니다.
 >
 > **Q. 이미 배포한 Runtime 이 있으면 버려야 하나요?**
 > 아니요. `agentcore import runtime --arn <arn>` 으로 새 프로젝트에 가져올 수 있습니다.
