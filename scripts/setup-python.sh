@@ -124,10 +124,22 @@ echo "   ✓ requirements.txt 설치 완료"
 echo ""
 
 # ────────────────────────────────────────────────────────────────
-# agentcore deploy 의 direct_code_deploy 모드 prerequisite — zip / uv
-# starter-toolkit 이 PATH 에서 두 도구를 명시적으로 검사합니다.
+# 배포 prerequisite — zip / uv
+#
+# uv 는 새 AgentCore CLI(@aws/agentcore) 의 **필수** 전제조건입니다.
+#   - aws/agentcore-cli README 요구사항: "uv — for Python agents"
+#   - CLI 내부 사전점검이 uv 를 severity=error 로 검사
+#     ("'uv' is required for Python projects")
+#   - agentcore create 가 내부적으로 `uv sync` 로 의존성을 설치
+#
+# 주의: 공식 devguide 의 Prerequisites 목록에는 uv 가 **빠져 있습니다**
+# (Node/Python/CDK/권한/모델액세스만 나열). 문서만 따라가면 놓칩니다.
+#
+# uv 가 없으면 agentcore create 가 실패하지 않고 경고만 냅니다 —
+#   "Warning: uv not found — run 'uv sync' manually in app/<name>"
+# 그리고 배포 단계에서 의존성 누락으로 터집니다. 그래서 여기서 확실히 깝니다.
 # ────────────────────────────────────────────────────────────────
-echo ">> direct_code_deploy 의존 도구 (zip, uv) 확인"
+echo ">> 배포 의존 도구 (zip, uv) 확인"
 
 if ! command -v zip > /dev/null 2>&1; then
   echo "   zip 설치 시도..."
@@ -148,15 +160,24 @@ fi
 if ! command -v uv > /dev/null 2>&1; then
   echo "   uv 설치 시도..."
   curl -LsSf https://astral.sh/uv/install.sh | sh > /dev/null 2>&1 || true
-  # uv 기본 설치 경로
+  # uv 기본 설치 경로 (설치 스크립트가 ~/.bashrc 도 갱신하므로 새 터미널에도 반영됨)
   export PATH="$HOME/.local/bin:$PATH"
   if command -v uv > /dev/null 2>&1; then
-    echo "   ✓ uv 설치 ($(which uv))"
+    echo "   ✓ uv 설치 ($(uv --version 2>/dev/null || which uv))"
   else
-    echo "   ⚠ uv 설치 실패 — 수동: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo ""
+    echo "   ✗ uv 설치 실패 — Day 2 의 agentcore CLI 가 동작하지 않습니다."
+    echo "     uv 는 @aws/agentcore 의 필수 전제조건입니다 (Python 에이전트)."
+    echo "     없으면 'agentcore create' 가 경고만 내고 넘어간 뒤 배포에서 실패합니다."
+    echo ""
+    echo "     수동 설치:"
+    echo "       curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "       export PATH=\"\$HOME/.local/bin:\$PATH\""
+    echo ""
+    UV_MISSING=1
   fi
 else
-  echo "   ✓ uv 존재"
+  echo "   ✓ uv 존재 ($(uv --version 2>/dev/null || which uv))"
 fi
 echo ""
 
@@ -224,6 +245,12 @@ echo ""
 # 호출자가 다음 단계 안내를 직접 출력하도록, 여기서는 일반 메시지만 남깁니다.
 # (Day 1 Pre-Lab 직후 라면 Lab 0 또는 Lab 1 로, Day 2 패스트트랙 안에서면
 #  Memory/Gateway 생성으로 이어지는 식으로 컨텍스트가 다릅니다.)
+if [[ "${UV_MISSING:-0}" == "1" ]]; then
+  echo "⚠️  uv 가 없습니다 — Day 1 은 진행 가능하지만 Day 2 (agentcore CLI) 전에"
+  echo "    반드시 설치해야 합니다. 위의 수동 설치 안내를 참고하세요."
+  echo ""
+fi
+
 echo "Python 환경 준비가 끝났습니다."
 echo ""
 echo "다음 단계는 워크샵 진행 단계에 따라 다릅니다:"

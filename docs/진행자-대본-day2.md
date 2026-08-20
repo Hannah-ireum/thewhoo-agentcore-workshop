@@ -5,16 +5,39 @@
 
 ## ⚠️ 진행 전 필수 확인 — CLI
 
-Day 2 는 공식 문서가 안내하는 **AgentCore CLI**(`@aws/agentcore`, npm)를 사용합니다. AgentCore CLI 는 2026-02 public preview → 2026-03 GA(v0.4.0) 로 출시됐습니다 (release notes 확인). 구 Python starter-toolkit 은 실행 시 "no longer supported" 배너를 내보냅니다 — 단 이 문구는 **도구가 출력하는 안내**이고 devguide release notes 에 공식 지원 종료 공지는 없습니다.
+Day 2 는 공식 문서가 안내하는 **AgentCore CLI**(`@aws/agentcore`, npm)를 사용합니다. AgentCore CLI 는 2026-02 public preview → 2026-03 GA(v0.4.0) 로 출시됐고, 현재 최신은 **0.27.1**(2026-08-20 npm 게시)입니다.
+
+구 Python starter-toolkit 은 **AWS 가 legacy 로 표기**했습니다 — GitHub 저장소 설명이 "Python CLI toolkit for Amazon Bedrock AgentCore (legacy). For new projects, use the AgentCore CLI" 이고, PyPI 최신 0.3.12(2026-08-19)에도 "no longer supported" 문구가 실려 있습니다. 즉 배너뿐 아니라 **패키지 메타데이터 수준의 표기**입니다. (devguide release notes 에는 항목이 없습니다 — 공지 경로가 저장소·PyPI 쪽.)
 
 **진행자가 확인할 것 (실습 시작 전에 한 번):**
 
 ```bash
 node --version     # v20 이상
 npm --version
+uv --version       # ⚠️ Python 에이전트 필수
 ```
 
 Code Editor 에는 Node.js 가 기본 포함돼 있습니다 (검증 시 v20.19.6 / npm 11.18.0). **`cdk bootstrap` 은 참가자가 직접 하지 않아도 됩니다** — 첫 `agentcore deploy` 가 필요하면 자동 처리합니다.
+
+### ⚠️ `uv` — 공식 devguide 에 빠져 있는 전제조건
+
+devguide 의 Prerequisites 는 Node.js·Python·CDK·권한·모델액세스만 적고 **`uv` 를 빠뜨렸습니다.** 하지만 CLI 저장소 README 는 "uv — for Python agents" 를 요구사항으로 명시하고, CLI 내부 사전점검이 `uv` 를 severity `error` 로 검사합니다 (`'uv' is required for Python projects`).
+
+`uv` 가 없으면 `agentcore create` 가 **바로 멈춥니다** (실측: exit 1, 디렉터리도 안 만들어짐):
+
+```
+'uv' is required for Python projects. Install from https://github.com/astral-sh/uv#installation
+```
+
+> **진행자에게 좋은 소식** — 메시지가 명확하고 중간 상태를 남기지 않아서, 참가자가 막히면 원인을 바로 알 수 있습니다. 다만 여러 명이 동시에 막히면 시간을 잡아먹으니 **Lab 5 시작 전에 `uv --version` 을 전원 확인**시키는 게 낫습니다.
+
+워크샵은 `setup-python.sh` 가 `uv` 를 자동 설치하고 uv 설치 스크립트가 `~/.bashrc` 를 갱신하므로, Pre-Lab 을 마친 참가자는 준비돼 있습니다. 실패했다면:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# 새 터미널을 열거나
+export PATH="$HOME/.local/bin:$PATH"
+```
 
 **참가자가 물어볼 것:**
 
