@@ -189,6 +189,25 @@ fi
 echo ""
 
 # ────────────────────────────────────────────────────────────────
+# Node.js 확인 (Day 2 Lab 5 의 AgentCore CLI 가 npm 패키지)
+# ────────────────────────────────────────────────────────────────
+echo ">> Node.js 확인 (Day 2 배포용)"
+if command -v node > /dev/null 2>&1; then
+  NODE_VER=$(node --version 2>/dev/null)
+  NODE_MAJOR=$(echo "${NODE_VER}" | sed 's/^v//' | cut -d. -f1)
+  if [ "${NODE_MAJOR:-0}" -ge 20 ] 2>/dev/null; then
+    echo "   ✓ ${NODE_VER} (Day 2 의 agentcore CLI 사용 가능)"
+  else
+    echo "   ⚠ ${NODE_VER} — Day 2 Lab 5 는 Node 20 이상이 필요합니다."
+    echo "     Day 1 만 진행하면 문제 없습니다."
+  fi
+else
+  echo "   ⚠ node 없음 — Day 2 Lab 5 (agentcore CLI) 에서 필요합니다."
+  echo "     Day 1 만 진행하면 문제 없습니다."
+fi
+echo ""
+
+# ────────────────────────────────────────────────────────────────
 # 완료
 # ────────────────────────────────────────────────────────────────
 FINISH=$(date +%s)
