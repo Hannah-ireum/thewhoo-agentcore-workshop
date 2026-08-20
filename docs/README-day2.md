@@ -54,9 +54,22 @@ Day 1 에서 만든 인프라가 새 계정에는 없으므로 **인프라만 �
 
 **1단계 — SageMaker Studio 도메인 만들기** (약 5분)
 
-Workshop Studio Console 에서 SageMaker Studio (또는 Studio Classic) 를 한 번 열어주세요. **여기서 Code Editor 를 한 번이라도 열어서 터미널을 띄우면** SageMaker Execution Role 이 자동 생성됩니다.
+Console → **SageMaker AI** → **Studio** → **Create domain** → **Set up for single user (Quick setup)**.
+상태가 **InService** 가 될 때까지 기다립니다. 도메인이 만들어지면 `AmazonSageMaker-ExecutionRole-<타임스탬프>` 가 **자동 생성**되고, 2단계 스크립트가 이 role 에 권한을 붙입니다.
 
-이 단계가 끝나면 일단 Code Editor 는 열어둔 채로 두고, 다음 2단계로 갑니다.
+role 이 생겼는지 확인:
+
+```bash
+aws iam list-roles \
+  --query "Roles[?starts_with(RoleName, 'AmazonSageMaker-ExecutionRole-')].RoleName" \
+  --output text
+```
+
+> ⚠️ **도메인을 먼저 만들지 않으면** 2단계의 `grant-sagemaker-permissions.sh` 가
+> `[알림] 이 계정에 SageMaker execution role 이 없습니다` 만 출력하고 아무 일도 하지 않습니다.
+> 그 상태로 진행하면 3단계 Code Editor 에서 `AccessDeniedException` 이 납니다.
+
+**이 단계에서는 Code Editor space 를 아직 만들지 마세요.** 2단계에서 권한을 부여한 **뒤에** 만들어야 터미널이 올바른 자격증명을 캐시합니다. (space 를 이미 만들었다면 그대로 두고, 3단계에서 터미널만 새로 열면 됩니다.)
 
 **2단계 — CloudShell 에서 인프라 + KB 생성** (약 10-15분)
 
@@ -75,7 +88,17 @@ cd thewhoo-agentcore-workshop
 
 **3단계 — Code Editor 에서 새 터미널 + Memory + Gateway 생성** (약 3-5분)
 
-권한 부여가 끝났지만, **1단계에서 열어둔 Code Editor 터미널은 옛 자격증명을 캐시하고 있습니다**. 터미널을 닫고 새로 열어 진행:
+이제 Code Editor space 를 만들고 터미널을 엽니다.
+
+1. Studio → 좌측 **Applications → Code Editor** → **Create Code Editor space**
+2. Name 입력 → **Create space** → 기본값 그대로 **Run space**
+3. 상태가 **Running** 이 되면 **Open** → VS Code 화면
+4. 상단 메뉴 **Terminal → New Terminal**
+
+> space 를 1단계에서 이미 만들어 두셨다면, **터미널을 닫고 새로 열어야** 합니다.
+> 권한 부여 전에 열린 터미널은 옛 자격증명을 캐시하고 있어 새 정책이 반영되지 않습니다.
+
+터미널에서:
 
 ```bash
 cd ~ && git clone https://github.com/Hannah-ireum/thewhoo-agentcore-workshop.git 2>/dev/null || (cd ~/thewhoo-agentcore-workshop && git pull)
