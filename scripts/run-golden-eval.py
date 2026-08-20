@@ -129,6 +129,14 @@ def build_reference_inputs(scenario: dict, session_id: str) -> list[dict]:
           "expectedResponse": {"text": ...},
       }]
 
+    ground truth 필드의 **scope 가 다릅니다** (공식 문서 표):
+      assertions / expectedTrajectory → Session level (세션당 1건)
+      expectedResponse               → Trace level  (trace 를 지정해야 정확)
+
+    evaluator 가 안 쓰는 필드는 무시되고 응답의 ignoredReferenceInputFields
+    에 보고됩니다 — 에러가 아니라 정상 동작입니다. 그래서 한 번 만든
+    reference input 을 여러 evaluator 에 그대로 재사용할 수 있습니다.
+
     ground truth 가 하나도 없으면 빈 리스트를 반환합니다 (그 경우 호출 시 생략).
     """
     ref: dict = {"context": {"spanContext": {"sessionId": session_id}}}
@@ -139,11 +147,17 @@ def build_reference_inputs(scenario: dict, session_id: str) -> list[dict]:
     if scenario.get("expected_trajectory"):
         ref["expectedTrajectory"] = {"toolNames": scenario["expected_trajectory"]}
 
-    # turns[].expected_response 는 trace 에 위치 기반으로 매핑됩니다 (turn 0 → trace 0).
-    # 이 골든셋은 현재 사용하지 않지만, 넣으면 Builtin.Correctness 가 씁니다.
+    # expectedResponse 는 **trace level** 입니다. traceId 를 주지 않으면 공식
+    # 문서 기준 "세션의 마지막 trace" 에 매칭됩니다 (turn 0 → trace 0 이 아닙니다).
+    # 현재 골든셋은 전부 단일 턴 + expected_response 미사용(0건)이라 이 분기는
+    # 타지 않습니다. 여러 턴에 각각 정답을 주려면 turn 별 traceId 를 알아내
+    # reference input 을 여러 개로 나눠야 하므로, 그때 이 함수를 확장하세요.
     expected = [t.get("expected_response") for t in scenario.get("turns", [])]
     expected = [e for e in expected if e]
     if expected:
+        if len(expected) > 1:
+            print(f"  ⚠ {scenario['scenario_id']}: expected_response 가 {len(expected)}개 —"
+                  " traceId 없이는 마지막 trace 에만 적용됩니다. 첫 값만 사용합니다.")
         ref["expectedResponse"] = {"text": expected[0]}
 
     # context 외에 아무 것도 없으면 굳이 넘기지 않습니다.
@@ -296,9 +310,11 @@ def main() -> int:
                 case_pass = False
                 continue
 
-            # 주의: Evaluate 는 호출당 최대 10건의 결과만 반환합니다 (기본은 마지막 10건).
-            # trace/span 이 10개를 넘는 긴 세션은 일부만 채점됩니다 —
-            # 정밀하게 하려면 evaluationTarget={"traceIds": [...]} 로 나눠 호출하세요.
+            # evaluationResults 는 evaluator level 에 따라 건수가 달라집니다:
+            #   - Session level (GoalSuccessRate / Trajectory*) → 세션당 1건
+            #   - Trace level   (Correctness / Helpfulness)     → trace 당 1건
+            # 특정 trace 만 채점하려면 evaluationTarget={"traceIds": [...]} 를 씁니다.
+            # (공식 quota: span 1,000/on-demand 평가, payload 15MB)
             results = resp.get("evaluationResults", [])
             gate = DEFAULT_GATE.get(evaluator_id)
             ok, line = gate_check(evaluator_id, results, gate)
