@@ -86,10 +86,17 @@ def invoke_runtime(bac, runtime_arn: str, session_id: str, message: str) -> str:
         payload=json.dumps({"message": message}),
     )
     body = resp["response"].read()
+    # app.py 의 entrypoint 는 문자열을 반환하므로 응답 본문은 JSON 문자열
+    # (예: "안녕하세요...") 입니다. json.loads 결과가 dict 가 아닐 수 있으므로
+    # 타입을 확인해야 합니다 — 예전 코드는 .get() 을 바로 불러 AttributeError
+    # ('str' object has no attribute 'get') 로 invoke 가 전부 실패했습니다.
     try:
-        return json.loads(body).get("response", body.decode("utf-8", errors="ignore"))
+        parsed = json.loads(body)
     except json.JSONDecodeError:
         return body.decode("utf-8", errors="ignore")
+    if isinstance(parsed, dict):
+        return parsed.get("response") or parsed.get("message") or json.dumps(parsed, ensure_ascii=False)
+    return parsed if isinstance(parsed, str) else str(parsed)
 
 
 def warmup(bac, runtime_arn: str) -> None:
@@ -166,6 +173,7 @@ def main() -> int:
     # 4) 시나리오별 invoke — 시작 시각 기록 (span 수집 범위용)
     invoke_start = datetime.now(timezone.utc) - timedelta(seconds=30)
     session_map: dict[str, str] = {}  # scenario_id -> session_id
+    invoke_failed: set[str] = set()   # invoke 가 실패한 scenario_id
 
     print("[run] 시나리오 invoke 시작")
     for scenario in scenarios:
@@ -180,6 +188,10 @@ def main() -> int:
                 print(f"  ✓ {sid}  \"{msg[:40]}\"")
             except Exception as e:
                 print(f"  ✗ {sid}  invoke 실패: {e}")
+                # invoke 가 실패한 시나리오는 평가 대상에서 제외해야 합니다.
+                # 기록하지 않으면 이 세션의 span 이 없는 상태로 evaluate 로 넘어가고,
+                # 최악의 경우 다른 세션 span 을 주워 잘못된 PASS 가 납니다.
+                invoke_failed.add(sid)
         time.sleep(1)  # 연속 invoke 간 짧은 간격
 
     print()
@@ -199,6 +211,13 @@ def main() -> int:
         print(f"[evaluate] {sid}")
 
         # span 수집
+        if sid in invoke_failed:
+            print(f"  ✗ invoke 가 실패한 시나리오 — 평가 생략, FAIL 처리")
+            summary.append((sid, "INVOKE_FAILED"))
+            overall_pass = False
+            print()
+            continue
+
         spans = fetch_spans_from_cloudwatch(
             session_id=session_id,
             event_log_group=runtime_log_group,

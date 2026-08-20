@@ -126,7 +126,7 @@ BODY=$(cat <<JSON
       "type": "log",
       "x": 0, "y": 14, "width": 12, "height": 6,
       "properties": {
-        "title": "Prompt Cache Hit Ratio (% · 60% 이하면 system prompt 회귀 의심)",
+        "title": "Prompt Cache Hit Ratio (% · 전 모델 합산 40~60% 가 정상 · 급락 시 회귀 의심)",
         "region": "${REGION}",
         "view": "timeSeries",
         "stacked": false,
