@@ -49,17 +49,26 @@ GOLDEN_SET_PATH = REPO_ROOT / "docs" / "eval" / "golden-set.json"
 
 DEFAULT_EVALUATORS = [
     "Builtin.Helpfulness",
-    "Builtin.GoalSuccessRate",
+    "Builtin.GoalSuccessRate",          # assertions 를 소비
     "Builtin.ToolSelectionAccuracy",
+    "Builtin.TrajectoryInOrderMatch",   # expected_trajectory 를 소비
 ]
 
 # evaluator 별 PASS 기준.
 #  - float: 평균 score 의 하한 (Helpfulness 0~1 스케일)
 #  - str:   label 정답 (GoalSuccessRate / ToolSelectionAccuracy)
+# evaluator 별 PASS 기준.
+#  - float: 평균 value 의 하한 (value 는 0~1 정규화)
+#  - set:   허용 label 집합
+#
+# 주의: GoalSuccessRate 는 ground truth(assertions) 를 넘기면 **다른 prompt template**
+# 이 적용되고 verdict 어휘가 Yes/No → SUCCESS/FAILURE 로 바뀝니다. 그래서 label 은
+# 집합으로 받고, 판정은 value 기준을 우선합니다.
 DEFAULT_GATE = {
     "Builtin.Helpfulness": 0.5,
-    "Builtin.GoalSuccessRate": "Yes",
-    "Builtin.ToolSelectionAccuracy": "Yes",
+    "Builtin.GoalSuccessRate": {"Yes", "SUCCESS"},
+    "Builtin.ToolSelectionAccuracy": {"Yes", "SUCCESS"},
+    "Builtin.TrajectoryInOrderMatch": 1.0,   # 기대 도구가 순서대로 등장하면 1.0
 }
 
 
@@ -109,6 +118,38 @@ def warmup(bac, runtime_arn: str) -> None:
         print(f"[warmup] ⚠ 실패 ({e}) — 그래도 계속 진행")
 
 
+def build_reference_inputs(scenario: dict, session_id: str) -> list[dict]:
+    """골든셋 시나리오 → Evaluate API 의 evaluationReferenceInputs 로 변환.
+
+    공식 스펙 (botocore bedrock-agentcore / ground-truth-evaluations.html):
+      evaluationReferenceInputs=[{
+          "context": {"spanContext": {"sessionId": ...}},   # context 는 필수
+          "assertions": [{"text": ...}],
+          "expectedTrajectory": {"toolNames": [...]},
+          "expectedResponse": {"text": ...},
+      }]
+
+    ground truth 가 하나도 없으면 빈 리스트를 반환합니다 (그 경우 호출 시 생략).
+    """
+    ref: dict = {"context": {"spanContext": {"sessionId": session_id}}}
+
+    if scenario.get("assertions"):
+        ref["assertions"] = [{"text": a} for a in scenario["assertions"]]
+
+    if scenario.get("expected_trajectory"):
+        ref["expectedTrajectory"] = {"toolNames": scenario["expected_trajectory"]}
+
+    # turns[].expected_response 는 trace 에 위치 기반으로 매핑됩니다 (turn 0 → trace 0).
+    # 이 골든셋은 현재 사용하지 않지만, 넣으면 Builtin.Correctness 가 씁니다.
+    expected = [t.get("expected_response") for t in scenario.get("turns", [])]
+    expected = [e for e in expected if e]
+    if expected:
+        ref["expectedResponse"] = {"text": expected[0]}
+
+    # context 외에 아무 것도 없으면 굳이 넘기지 않습니다.
+    return [ref] if len(ref) > 1 else []
+
+
 def gate_check(evaluator_id: str, results: list[dict], gate) -> tuple[bool, str]:
     """evaluator 결과 리스트를 gate 기준과 비교. (pass, summary_line) 반환."""
     valid = [r for r in results if "errorCode" not in r]
@@ -128,10 +169,12 @@ def gate_check(evaluator_id: str, results: list[dict], gate) -> tuple[bool, str]
         return ok, f"  · {evaluator_id}: 평균 {avg:.2f} (gate {gate}) {marker}"
 
     labels = [r.get("label") for r in valid]
-    ok = all(label == gate for label in labels)
+    allowed = gate if isinstance(gate, (set, frozenset)) else {gate}
+    ok = all(label in allowed for label in labels)
     marker = "✅ PASS" if ok else "❌ FAIL"
     summary = labels[0] if len(labels) == 1 else labels
-    return ok, f"  · {evaluator_id}: {summary} (expected {gate}) {marker}"
+    expected = " 또는 ".join(sorted(allowed))
+    return ok, f"  · {evaluator_id}: {summary} (expected {expected}) {marker}"
 
 
 def main() -> int:
@@ -232,18 +275,30 @@ def main() -> int:
             print()
             continue
 
+        # 골든셋의 ground truth (assertions / expected_trajectory / expected_response) 를
+        # evaluationReferenceInputs 로 넘겨야 evaluator 가 실제로 사용합니다.
+        # 이걸 빼면 GoalSuccessRate 등이 ground-truth-free 모드로 돌아 골든셋과
+        # 무관한 것을 채점합니다 (공식 ground-truth-evaluations.html 참고).
+        reference_inputs = build_reference_inputs(scenario, session_id)
+
         case_pass = True
         for evaluator_id in evaluators:
             try:
-                resp = bac.evaluate(
-                    evaluatorId=evaluator_id,
-                    evaluationInput={"sessionSpans": spans},
-                )
+                kwargs = {
+                    "evaluatorId": evaluator_id,
+                    "evaluationInput": {"sessionSpans": spans},
+                }
+                if reference_inputs:
+                    kwargs["evaluationReferenceInputs"] = reference_inputs
+                resp = bac.evaluate(**kwargs)
             except Exception as e:
                 print(f"  ❌ {evaluator_id}: API 실패 — {e}")
                 case_pass = False
                 continue
 
+            # 주의: Evaluate 는 호출당 최대 10건의 결과만 반환합니다 (기본은 마지막 10건).
+            # trace/span 이 10개를 넘는 긴 세션은 일부만 채점됩니다 —
+            # 정밀하게 하려면 evaluationTarget={"traceIds": [...]} 로 나눠 호출하세요.
             results = resp.get("evaluationResults", [])
             gate = DEFAULT_GATE.get(evaluator_id)
             ok, line = gate_check(evaluator_id, results, gate)

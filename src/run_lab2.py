@@ -40,12 +40,17 @@ def fetch_profile(user_id: str) -> list[str]:
     client = get_memory_client()
     mem_id = get_memory_id()
     lines = []
-    for ns, q in [
-        (f"/preferences/{user_id}/", "피부타입 선호"),
-        (f"/summaries/{user_id}/session/", "이전 대화 요약"),
+    # namespace 는 "정확히 일치" 조회이고, prefix 조회는 namespace_path 를 씁니다
+    # (공식 문서 RetrieveMemoryRecords 참고). summaries 는 namespace 에
+    # {sessionId} 가 포함돼 세션마다 달라지므로, 세션을 모르는 이 함수에서는
+    # namespace_path 로 /summaries/{actorId}/ 아래를 전부 훑습니다.
+    for ns, q, use_path in [
+        (f"/preferences/{user_id}/", "피부타입 선호", False),
+        (f"/summaries/{user_id}/",   "이전 대화 요약", True),
     ]:
         try:
-            for p in client.retrieve_memories(memory_id=mem_id, namespace=ns, query=q):
+            kwargs = {"namespace_path": ns} if use_path else {"namespace": ns}
+            for p in client.retrieve_memories(memory_id=mem_id, query=q, **kwargs):
                 lines.append(_parse(p["content"]["text"]))
         except Exception:
             pass
