@@ -30,6 +30,22 @@ if [ -z "${ROLES}" ]; then
   exit 0
 fi
 
+# ────────────────────────────────────────────────────────────────
+# IAM action prefix 주의 — endpoint 이름이 아니라 signingName 을 씁니다.
+#
+# boto3 클라이언트 이름과 IAM prefix 가 다릅니다:
+#   boto3 bedrock / bedrock-runtime / bedrock-agent / bedrock-agent-runtime
+#     → 전부 signingName = "bedrock"       → IAM action 은 bedrock:*
+#   boto3 bedrock-agentcore / bedrock-agentcore-control
+#     → 전부 signingName = "bedrock-agentcore" → IAM action 은 bedrock-agentcore:*
+#
+# 예전에는 "bedrock-agent-runtime:*", "bedrock-runtime:*",
+# "bedrock-agentcore-control:*" 도 나열했는데, 이들은 **존재하지 않는
+# prefix** 라 아무 권한도 주지 않습니다. IAM 은 오타 prefix 를 거부하지
+# 않고 그냥 무시하므로 조용히 무효가 됩니다 (SimulateCustomPolicy 로
+# implicitDeny 확인). bedrock:* / bedrock-agentcore:* 두 개가 실제로
+# 모든 호출을 커버하고 있었습니다.
+# ────────────────────────────────────────────────────────────────
 POLICY_DOC=$(cat <<'EOF'
 {
   "Version": "2012-10-17",
@@ -37,8 +53,7 @@ POLICY_DOC=$(cat <<'EOF'
     {
       "Effect": "Allow",
       "Action": [
-        "bedrock:*", "bedrock-agent:*", "bedrock-agent-runtime:*",
-        "bedrock-runtime:*", "bedrock-agentcore:*", "bedrock-agentcore-control:*",
+        "bedrock:*", "bedrock-agentcore:*",
         "aws-marketplace:ViewSubscriptions", "aws-marketplace:Subscribe",
         "aws-marketplace:Unsubscribe",
         "lambda:*", "s3vectors:*", "cognito-idp:*",
