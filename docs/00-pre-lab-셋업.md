@@ -133,46 +133,23 @@ cd ~
 git clone https://github.com/Hannah-ireum/thewhoo-agentcore-workshop.git
 cd thewhoo-agentcore-workshop
 ./scripts/setup-python.sh
-```
 
-### 3-4. venv 활성화 (⚠️ 반드시 필요)
+source .venv/bin/activate   # setup-python.sh 가 만든 venv 를 현재 터미널에 적용
+which python                # .venv/bin/python 이 나와야 정상
 
-`setup-python.sh` 는 `.venv` 를 **만들어 주지만, 활성화까지 이어지지는 않습니다.** 스크립트는 자기 프로세스 안에서만 활성화하고 종료되므로, 스크립트가 끝나면 터미널은 다시 시스템 Python(`/opt/conda/...`) 을 가리킵니다.
-
-**활성화하지 않으면** 시스템에 미리 깔린 구버전 `strands` 가 잡혀서 Lab 1 부터 이런 에러가 납니다:
-
-```
-ImportError: cannot import name 'CacheConfig' from 'strands.models.model'
-  (/opt/conda/lib/python3.12/site-packages/strands/models/model.py)
-```
-
-경로에 `/opt/conda` 가 보이면 venv 가 활성화되지 않은 것입니다.
-
-```bash
-cd ~/thewhoo-agentcore-workshop
-source .venv/bin/activate
-
-# 확인 — 반드시 .venv 경로가 나와야 합니다
-which python        # → /home/sagemaker-user/thewhoo-agentcore-workshop/.venv/bin/python
-
-# 설치된 버전 + 문제가 됐던 import 가 실제로 되는지 확인
-python -c "import importlib.metadata as m; print('strands-agents', m.version('strands-agents'))"
-python -c "from strands.models.model import CacheConfig; print('CacheConfig OK')"
-```
-
-두 명령이 모두 정상 출력되면 준비 완료입니다.
-
-이어서 환경변수를 설정합니다.
-
-```bash
 # CloudShell 에서 복사한 값
 export PARTICIPANT_ID=w001
 export AWS_REGION=us-east-1
 export KB_ID=<위에서 기억해둔 값>
 ```
 
-> **터미널을 새로 열 때마다** `source .venv/bin/activate` 를 다시 해야 합니다.
-> 프롬프트 앞에 `(.venv)` 가 보이면 활성화된 상태입니다.
+> ⚠️ **`source .venv/bin/activate` 는 터미널을 새로 열 때마다 다시 해야 합니다.**
+> `setup-python.sh` 는 venv 를 만들어 주지만, 스크립트는 자식 프로세스라 활성화가
+> 참가자 터미널까지 이어지지 않습니다. 프롬프트 앞에 `(.venv)` 가 보이면 정상입니다.
+>
+> 활성화를 빠뜨리면 시스템에 깔린 구버전 `strands` 가 잡혀 Lab 1 부터
+> `ImportError: cannot import name 'CacheConfig' from 'strands.models.model'` 가 납니다.
+> 에러 경로에 `/opt/conda` 가 보이는 것이 판별 단서입니다.
 
 ## 여기까지 됐으면 성공
 
