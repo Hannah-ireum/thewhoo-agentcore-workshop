@@ -82,6 +82,10 @@ export KB_ID=<위에서 기억해둔 값>
 > 프롬프트에 `(.venv)` 가 보이면 정상입니다. 빠뜨리면 시스템에 깔린 구버전 strands 가
 > 잡혀 `ImportError: cannot import name 'CacheConfig'` 가 납니다 (에러 경로에 `/opt/conda`).
 
+> **Day 2 를 진행하실 분** — Lab 5 배포는 AgentCore CLI(npm 패키지)를 씁니다. Code Editor 에
+> Node.js 가 이미 있으니 버전만 확인해 두세요. `node --version` 이 **v20 이상**이면 됩니다.
+> CLI 설치는 Lab 5 에서 안내하고, `cdk bootstrap` 은 직접 하지 않아도 됩니다.
+
 ## 여기까지 됐으면 성공
 
 - [ ] `grant-sagemaker-permissions.sh` 출력에 **`정책 적용 완료`**

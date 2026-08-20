@@ -3,30 +3,29 @@
 > **진행자용** 문서입니다. 참가자 배포 자료가 아닙니다.
 > 명령과 출력은 실제 AWS 계정에서 완주 검증한 값입니다.
 
-## ⚠️ 진행 전 필수 확인 — CLI 두 가지
+## ⚠️ 진행 전 필수 확인 — CLI
 
-AWS 는 2026 년 들어 **새 AgentCore CLI**(`@aws/agentcore`, npm)를 공식 경로로 안내합니다. 현재 Lab 5-8 은 **Python starter-toolkit** 기반이고, 실행하면 이 배너가 뜹니다:
+Day 2 는 AWS 공식 권장 도구인 **AgentCore CLI**(`@aws/agentcore`, npm)를 사용합니다. 이전 버전 워크샵의 Python starter-toolkit 은 AWS 가 지원 종료를 공지했습니다.
 
+**진행자가 확인할 것 (실습 시작 전에 한 번):**
+
+```bash
+node --version     # v20 이상
+npm --version
 ```
-⚠️ Recommendation: The Starter Toolkit CLI is no longer supported.
-   Please use the AgentCore CLI (@aws/agentcore) ...
-```
 
-**진행자가 알아야 할 것:**
+Code Editor 에는 Node.js 가 기본 포함돼 있습니다 (검증 시 v20.19.6 / npm 11.18.0). **`cdk bootstrap` 은 참가자가 직접 하지 않아도 됩니다** — 첫 `agentcore deploy` 가 필요하면 자동 처리합니다.
 
-| | Python starter-toolkit (현재 Lab) | 새 AgentCore CLI |
-|---|---|---|
-| 설치 | `pip install bedrock-agentcore-starter-toolkit` | `npm install -g @aws/agentcore` |
-| 상태 | **동작함** (2026-08-20 완주 검증) | 공식 권장 |
-| 전제 | Python 만 | **Node.js 20+ · AWS CDK · `cdk bootstrap`** + 별도 IAM 정책 |
-| 신규 기능 | 안 들어옴 | 여기만 들어옴 |
+**참가자가 물어볼 것:**
 
-**워크샵 당일 대응**: 현재 Lab 그대로 진행하세요. 실습은 정상 동작합니다.
-배너가 뜨면 `AGENTCORE_SUPPRESS_RECOMMENDATION=1` 로 끌 수 있습니다.
-
-참가자가 "그럼 실무에선 뭘 쓰나요?" 라고 물으면 → **새 CLI 를 쓰라고 답하고**, [새 CLI 이전 가이드](새-cli-이전-가이드.md) 를 안내하세요. 워크샵 개념(Runtime·Memory·Gateway·Observability·Evaluations)은 두 CLI 에서 동일합니다.
-
----
+> **Q. 왜 npm 인가요? Python 워크샵인데요.**
+> CLI 만 Node 로 배포됩니다. 에이전트 코드는 그대로 Python 입니다. CLI 가 AWS CDK 를 내부적으로 쓰기 때문입니다.
+>
+> **Q. 예전 자료에는 `agentcore configure` 가 있는데요.**
+> 구 starter-toolkit 명령입니다. 지원 종료됐고 신규 기능이 안 들어옵니다. 명령 대응표는 [새 CLI 이전 가이드](새-cli-이전-가이드.md) 에 있습니다.
+>
+> **Q. 이미 배포한 Runtime 이 있으면 버려야 하나요?**
+> 아니요. `agentcore import runtime --arn <arn>` 으로 새 프로젝트에 가져올 수 있습니다.
 
 ## 타임라인 (총 약 2시간 40분)
 
@@ -82,89 +81,109 @@ echo "KB=$KB_ID  MEM=$AGENTCORE_MEMORY_ID  GW=$AGENTCORE_GATEWAY_URL"
 >
 > 1. **세션 유지** — 에이전트 대화는 상태가 있습니다. Lambda 는 stateless 라 세션마다 외부 저장소가 필요합니다
 > 2. **긴 실행** — 멀티턴 + 도구 호출이 이어지면 15분을 넘길 수 있습니다
-> 3. **관측 자동 연결** — CloudWatch Logs·X-Ray 를 배포가 알아서 붙입니다
+> 3. **관측 자동 연결** — CloudWatch Logs·X-Ray·Transaction Search 를 배포가 알아서 붙입니다
 
-### 강조할 개념 — entrypoint 계약
+### 강조할 개념 — 이번엔 IaC 입니다
 
-> "Runtime 이 요구하는 건 딱 하나입니다 — `@app.entrypoint` 로 표시된 함수. 이게 HTTP `POST /invocations` 로 매핑됩니다. 우리가 서버 코드를 쓰지 않습니다."
-
-`src/app.py` 를 열어 `session_id` 우선순위를 짚어 주세요:
-
-> "session_id 를 어디서 가져오는지 보세요 — **Runtime 헤더 → payload → 새 UUID** 순입니다. `agentcore invoke --session-id` 가 헤더로 전달되기 때문에 헤더가 최우선입니다."
+> "새 CLI 는 '배포 스크립트' 가 아니라 **프로젝트 전체를 JSON 으로 선언**하는 방식입니다. Runtime·Memory·KB·Gateway·Evaluator 를 한 파일에서 관리하고, CDK 가 CloudFormation 으로 바꿔 적용합니다."
+>
+> "그래서 좋은 점 — `remove` 후 `deploy` 하면 **정확히 되돌아갑니다**. 손으로 만든 리소스는 이게 안 되죠."
 
 ### 입력할 명령
 
+**1) CLI 설치 + 프로젝트 생성**
+
 ```bash
 cd ~/thewhoo-agentcore-workshop
-[ -f .bedrock_agentcore.yaml ] && mv .bedrock_agentcore.yaml .bedrock_agentcore.yaml.bak
+npm install -g @aws/agentcore
+agentcore --version
 
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-agentcore configure \
-  --entrypoint src/app.py \
-  --name thewhoo_chat \
-  --runtime PYTHON_3_12 \
-  --deployment-type direct_code_deploy \
-  --requirements-file requirements.txt \
-  --execution-role "arn:aws:iam::${ACCOUNT_ID}:role/thewhoo-agent-role-w001" \
-  --region us-east-1 \
-  --non-interactive
+agentcore create --name ThewhooChat \
+  --framework Strands --protocol HTTP \
+  --model-provider Bedrock --memory none --build CodeZip
 ```
 
-> **여기서 deprecation 배너가 뜹니다.** 위의 "CLI 두 가지" 절 내용을 이 타이밍에 설명하세요. 참가자가 불안해하지 않도록 "동작합니다, 실무는 새 CLI" 라고 명확히 정리해 주세요.
+> **`--memory none` 을 설명하세요** — "Memory 는 Lab 2 에서 이미 만들었습니다. 여기서 또 만들면 두 개가 됩니다."
+>
+> 새 프로젝트라면 `--memory longAndShortTerm` **한 줄로 4-strategy 가 자동 선언**된다는 것도 알려주세요. Lab 2 에서 스크립트로 한 일이 설정 한 줄이 됩니다. (개념을 알아야 이 JSON 을 읽고 조정할 수 있다는 점을 짚어주면 Lab 2 의 의미가 살아납니다.)
 
-생성된 yaml 확인:
+**2) 우리 코드를 가리키게 설정**
 
 ```bash
-head -20 .bedrock_agentcore.yaml
+eval "$(./scripts/print-env.sh w001)"
+python3 scripts/set-agentcore-config.py
 ```
 
-`entrypoint` 가 현재 홈 경로이고 `account` 가 본인 계정이면 정상입니다.
+이 스크립트가 `agentcore.json` 에 넣는 것을 설명하세요:
 
-**배포:**
+| 필드 | 값 | 왜 |
+|---|---|---|
+| `codeLocation` | `src/` | Lab 1-4 에서 만든 코드를 그대로 배포 |
+| `entrypoint` | `app.py` | `codeLocation` **기준 상대경로** |
+| `runtimeVersion` | `PYTHON_3_12` | 기본값이 3.14 라 의존성 호환용으로 낮춤 |
+| `envVars` | KB/Memory/Gateway ID | 구 CLI 의 `--env` 를 대체 |
+
+**3) 배포 — 먼저 dry-run**
 
 ```bash
-agentcore deploy \
-  --env KB_ID=$KB_ID \
-  --env AGENTCORE_MEMORY_ID=$AGENTCORE_MEMORY_ID \
-  --env AGENTCORE_GATEWAY_URL=$AGENTCORE_GATEWAY_URL \
-  --env AWS_REGION=us-east-1
+agentcore deploy --dry-run -y
 ```
 
-3-5분 걸립니다. 이 시간에 "배포가 자동으로 해 주는 것" 을 설명하세요 — 코드 zip 패키징, S3 업로드, Runtime 등록, **CloudWatch Logs·X-Ray·Transaction Search 자동 연결**.
+> **이걸 먼저 돌리게 하세요.** 설정 오류를 리소스 생성 전에 잡습니다. `✓ Dry run complete` 가 나와야 다음으로 갑니다.
 
 ```bash
-agentcore status     # Ready / Endpoint DEFAULT (READY) 확인
+agentcore deploy -y
+agentcore status
 ```
+
+### ⚠️ 진행자가 미리 알려줄 것 — `pyproject.toml`
+
+참가자가 자기 프로젝트에 적용할 때 **가장 먼저 만나는 에러**입니다.
+
+```
+CDK synth failed: Required project file not found: .../src/pyproject.toml
+```
+
+> "새 CLI 는 `requirements.txt` 를 읽지 않습니다. `pyproject.toml` 이 필요합니다. 워크샵 저장소에는 `src/pyproject.toml` 을 미리 넣어 뒀습니다."
+>
+> "로컬 개발은 `requirements.txt`, 배포는 `pyproject.toml` — **두 파일의 버전 범위를 맞춰 두세요**. 어긋나면 '로컬은 되는데 배포는 실패' 가 됩니다."
 
 ### ⭐ 보여줄 것 — 멀티턴 세션
 
 ```bash
-SID="lab5-$(date +%s)-$(python3 -c 'import uuid;print(uuid.uuid4())')"
-agentcore invoke --session-id "$SID" '{"message":"건성 피부인데 보습크림 추천해줘"}'
-agentcore invoke --session-id "$SID" '{"message":"성분도 알려줘"}'
+agentcore invoke --session-id lab5-demo "건성 피부인데 보습크림 추천해줘"
+agentcore invoke --session-id lab5-demo "성분도 알려줘"
 ```
 
-**보여줄 것**: 두 번째 호출에서 "성분도" 만 물었는데 **첫 번째 추천 제품의 성분**이 나옵니다.
+**보여줄 것**: 두 번째에서 "성분도" 만 물었는데 첫 번째 추천 제품의 성분이 나옵니다.
 
-> "세션이 유지되고 있다는 증거입니다. 같은 `--session-id` 를 줬기 때문이죠. 이게 Lambda 로 하려면 직접 대화 이력을 저장·복원해야 하는 부분입니다."
+> "세션이 유지된다는 증거입니다. 출력 끝에 `To resume:` 로 세션 ID 를 알려주니 따로 적을 필요도 없습니다."
 
-### ⚠️ 진행자가 미리 알려줄 것
+### ⚠️ 그리고 이걸 짚어주세요 — Transaction Search 자동 활성화
 
-- **session_id 는 33자 이상**이어야 합니다 (Runtime API 제약). 위 명령이 UUID 를 붙이는 이유입니다.
-- 첫 invoke 는 **cold start** 로 느리거나 `Runtime initialization time exceeded` 가 날 수 있습니다. 한 번 더 시도하면 됩니다.
+배포 출력 마지막 줄:
+
+```
+Note: Transaction search enabled. It takes ~10 minutes ...
+```
+
+> "Lab 6 의 전제조건을 배포가 알아서 켜 줬습니다. 예전에는 별도 스크립트로 했던 부분입니다. 다만 **trace 인덱싱까지 10분** 걸리니, Lab 6 은 조금 뒤에 확인합니다."
+
+여기서 **휴식을 넣으면 타이밍이 맞습니다.**
 
 ### 자주 나오는 질문
 
-**Q. `--env` 를 안 주면 어떻게 되나요?**
-> 컨테이너 안에서 `KB_ID` 등을 못 찾아 실패합니다. 배포 시점에 주입해야 합니다.
+**Q. `agentcore: command not found`**
+> `npm install -g` 후 새 터미널을 여세요. `node --version` 이 20 이상인지도 확인.
 
 **Q. 코드를 고치고 다시 배포하려면?**
-> `agentcore deploy --auto-update-on-conflict` 에 같은 `--env` 를 다시 붙이면 됩니다.
+> `agentcore deploy -y` 같은 명령입니다. CDK 가 변경분만 적용합니다. 뭐가 바뀌는지 미리 보려면 `--diff`.
 
-**Q. `ConflictException ... already exists`**
-> 같은 이름 Runtime 이 살아있는데 yaml 이 비어 있는 경우입니다. `--auto-update-on-conflict` 를 추가하세요.
+**Q. 첫 invoke 가 `Runtime initialization time exceeded`**
+> cold start 입니다. 한 번 더 호출하면 됩니다.
 
----
+**Q. 콘솔에서 리소스를 지워도 되나요?**
+> **안 됩니다.** CDK 스택과 어긋납니다. 정리는 `agentcore remove all` → `agentcore deploy` 로 하세요.
 
 ## Lab 6. Observability (30분)
 
@@ -294,9 +313,9 @@ cd ~/thewhoo-agentcore-workshop
 
 ```bash
 SID="eval-$(date +%s)-$(python3 -c 'import uuid;print(uuid.uuid4())')"
-agentcore invoke --session-id "$SID" '{"message":"건성 피부에 좋은 보습크림 추천해줘"}'
+agentcore invoke --session-id "$SID" "건성 피부에 좋은 보습크림 추천해줘"
 # trace 인덱싱 2-5분 대기
-agentcore eval run --session-id "$SID" \
+agentcore run eval --session-id "$SID" \
   --evaluator "Builtin.Helpfulness" \
   --evaluator "Builtin.GoalSuccessRate" \
   --evaluator "Builtin.ToolSelectionAccuracy"
@@ -382,7 +401,8 @@ python3 scripts/run-golden-eval.py --case INFO_Q01 --wait 300
 
 | 증상 | 원인 | 조치 |
 |---|---|---|
-| deprecation 배너 | starter-toolkit 사용 | 정상. `AGENTCORE_SUPPRESS_RECOMMENDATION=1` |
+| `agentcore: command not found` | npm 설치 후 터미널 미갱신 | 새 터미널 열기. `node --version` 20+ 확인 |
+| `CDK synth failed ... pyproject.toml` | 새 CLI 는 requirements.txt 를 안 읽음 | `src/pyproject.toml` 확인 (저장소에 포함) |
 | `Runtime initialization time exceeded` | cold start | 재시도 |
 | trace 가 안 보임 | 인덱싱 지연 | 2-5분 대기 |
 | "Enable Agent observability" 만 보임 | Transaction Search 미활성 | `setup-day2-cloudshell.sh` 재실행 |
