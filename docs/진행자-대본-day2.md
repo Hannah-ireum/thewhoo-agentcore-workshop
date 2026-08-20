@@ -295,15 +295,34 @@ cd ~/thewhoo-agentcore-workshop
 | 2. Latency P50/P95/P99 | 분포 표시 |
 | 3. Sessions | 사용자 수만큼 |
 | 4. 모델별 토큰 | Sonnet + Haiku 두 줄 |
-| 5. Cache Hit Ratio | **40-60% 가 정상** |
+| 5. Cache Hit Ratio | **20~40% 가 정상** (실측 29%) |
 | 6. CPU/Memory | **최대 60분 지연** — 오늘 안 보일 수 있음 |
 | 7. 에러 로그 tail | **비어있는 게 정상** |
 
 ### ⚠️ Cache Hit Ratio 도 미리 설명
 
-> "60% 안 나온다고 문제가 아닙니다. `cache_config` 를 **Orchestrator 에만** 걸었고 Haiku 서브에이전트 3개는 캐시가 없습니다. 위젯은 전 모델 합산이라 구조적으로 40-60% 가 나옵니다."
+> "높은 숫자가 안 나온다고 문제가 아닙니다. `cache_config` 를 **Orchestrator 에만** 걸었고 Haiku 서브에이전트 3개는 캐시가 없습니다. 위젯은 전 모델 합산이라 구조적으로 **20~40%** 가 나옵니다 (실측 29%)."
 >
-> "판단 기준은 절대값이 아니라 **평소 대비 급락**입니다. 45% 였는데 10% 가 되면 system prompt 가 가변화된 신호죠."
+> "판단 기준은 절대값이 아니라 **평소 대비 급락**입니다. 29% 였는데 5% 가 되면 system prompt 가 가변화된 신호죠."
+
+**분모를 반드시 짚어주세요** — 참가자가 직접 계산해보다 틀리는 지점입니다.
+
+> "prompt caching 이 켜지면 `inputTokens` 는 **캐시되지 않은 토큰만** 뜻합니다. 공식 문서에 이렇게 나옵니다:
+> `total input tokens = inputTokens + cacheReadInputTokens + cacheWriteInputTokens`
+> 그래서 `cache_read / input_tokens` 로 계산하면 100% 를 넘는 무의미한 값이 됩니다. 위젯은 분모에 세 항목을 다 더합니다."
+
+### 💡 질문이 나오면 — "Haiku 에도 캐시를 걸면 되지 않나요?"
+
+걸어도 **거의 안 걸립니다.** 모델마다 cache checkpoint 최소 토큰이 다르기 때문입니다 (공식 [Prompt caching](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html) 표):
+
+| 모델 | 최소 토큰 / checkpoint |
+|---|---|
+| Claude Sonnet 4.6 (Orchestrator) | **1,024** |
+| Claude Haiku 4.5 (서브에이전트) | **4,096** |
+
+> "Orchestrator 의 system prompt 는 실측 1,996 토큰이라 Sonnet 기준 1,024 를 넘겨서 캐시가 걸립니다. 반면 서브에이전트 프롬프트는 훨씬 짧아서 Haiku 의 4,096 을 못 넘깁니다. **`cache_config` 를 걸어도 조용히 캐시가 안 잡히고**, 최소치 미달이면 추론은 성공하지만 prefix 는 캐시되지 않습니다."
+>
+> "실무 교훈 — 캐시를 켰는데 `cache_write` 가 0 이면 프롬프트가 그 모델의 최소치를 못 넘긴 건지 먼저 확인하세요. 모델을 바꾸면 임계값도 바뀝니다."
 
 ---
 
