@@ -1,6 +1,7 @@
 # 진행자 대본 — Day 1 (통합 챗봇 만들기)
 
 > 이 문서는 **진행자용**입니다. 참가자 배포 자료가 아닙니다.
+> 무대에서 **읽을 문장**은 [발표 대본](발표-대본-day1.md) 에 있습니다. 이 문서는 운영 정보(타임라인·명령·함정·Q&A)입니다.
 > 각 Lab 마다 **말할 것 / 입력할 명령 / 보여줄 것 / 자주 나오는 질문** 순서로 정리했습니다.
 > 명령과 출력은 실제 AWS 계정에서 완주 검증한 값입니다.
 
@@ -58,6 +59,24 @@
 ### 말할 것
 
 > "여기는 배우는 단계가 아니라 **준비 단계**입니다. 스크립트가 알아서 해 줍니다. 다만 **순서**가 중요합니다 — 순서를 어기면 뒤에서 권한 에러가 나는데 원인을 찾기 어렵습니다."
+
+### ⚠️ 워크샵 시작 전에 진행자가 확인할 것 — Anthropic FTU
+
+**참가자 계정에서 Claude 를 한 번도 호출한 적이 없으면, First Time Use 양식 제출이 필요합니다.** 공식 문서에 "must complete the FTU form before invoking" 으로 명시된 **필수** 단계입니다.
+
+안 하면 Lab 1 에서 전원이 `AccessDeniedException` 으로 멈춥니다. Workshop Studio 계정이 새로 발급된 경우 특히 확인하세요.
+
+> **사전 안내 문구 예시** — 워크샵 하루 전 공지에 넣으면 좋습니다:
+> "Console → Amazon Bedrock → Model catalog → Claude 모델 선택 → use case 양식을 미리 제출해 주세요. 사용 목적과 회사/GitHub URL 이 필요합니다."
+
+현장에서 확인:
+
+```bash
+aws bedrock get-foundation-model-availability \
+  --model-id anthropic.claude-haiku-4-5-20251001-v1:0 --region us-east-1
+```
+
+`agreementAvailability.status` = `AVAILABLE` 이면 정상입니다.
 
 ### ⚠️ 진행자가 가장 먼저 강조할 것
 
@@ -139,6 +158,12 @@ ImportError: cannot import name 'CacheConfig' from 'strands.models.model'
 ### 말할 것
 
 > "Knowledge Base 는 세 조각으로 됩니다 — **원본(S3) / 임베딩 모델 / 벡터 저장소**. 이 셋의 **dimension 이 정확히 일치**해야 하고, **어떻게 쪼개 넣느냐**(chunking)가 검색 품질의 80% 를 결정합니다."
+
+### ⚠️ 진행자가 먼저 밝혀야 할 것 — 샘플 데이터입니다
+
+> "이 29개 상품 데이터는 **워크샵 실습용 샘플**입니다. 제품명과 라인(천기단·비첩자생·공진단)은 실제 더후 체계를 참고했지만, **가격·전성분·평점·리뷰는 실제 값이 아닙니다.**"
+
+고객사 담당자가 있는 자리라면 이걸 **먼저** 밝히세요. 화장품은 전성분·기능성 표기가 화장품법 규제 대상이라, 실제 값처럼 오해되면 곤란합니다. 실서비스 전환 시 사내 PIM/상품 DB 로 교체해야 한다는 점을 함께 안내하세요.
 
 ### 강조할 개념 — chunking 을 왜 NONE 으로 했나
 

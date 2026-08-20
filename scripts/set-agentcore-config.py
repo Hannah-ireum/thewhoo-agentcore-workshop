@@ -49,12 +49,16 @@ def main() -> int:
         "entrypoint": "app.py",        # codeLocation 기준 상대경로
         "codeLocation": "src/",
         "runtimeVersion": "PYTHON_3_12",  # 기본값 PYTHON_3_14 → 의존성 호환용으로 낮춤
-        "envVars": {
-            "KB_ID": os.environ["KB_ID"],
-            "AGENTCORE_MEMORY_ID": os.environ["AGENTCORE_MEMORY_ID"],
-            "AGENTCORE_GATEWAY_URL": os.environ["AGENTCORE_GATEWAY_URL"],
-            "AWS_REGION": os.environ.get("AWS_REGION", "us-east-1"),
-        },
+        # envVars 는 공식 스키마상 배열입니다 — [{"name": ..., "value": ...}, ...]
+        # dict 로 넣으면 `agentcore validate` 가
+        #   runtimes[0].envVars: expected "array"
+        # 로 거부합니다 (schema.agentcore.aws.dev/v1/agentcore.json).
+        "envVars": [
+            {"name": "KB_ID", "value": os.environ["KB_ID"]},
+            {"name": "AGENTCORE_MEMORY_ID", "value": os.environ["AGENTCORE_MEMORY_ID"]},
+            {"name": "AGENTCORE_GATEWAY_URL", "value": os.environ["AGENTCORE_GATEWAY_URL"]},
+            {"name": "AWS_REGION", "value": os.environ.get("AWS_REGION", "us-east-1")},
+        ],
     })
 
     CONFIG.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
@@ -64,7 +68,7 @@ def main() -> int:
     print(f"    codeLocation   : {rt['codeLocation']}")
     print(f"    entrypoint     : {rt['entrypoint']}")
     print(f"    runtimeVersion : {rt['runtimeVersion']}")
-    print(f"    envVars        : {', '.join(rt['envVars'])}")
+    print(f"    envVars        : {', '.join(e['name'] for e in rt['envVars'])}")
     print()
     print("다음: agentcore deploy --dry-run -y  →  agentcore deploy -y")
     return 0
