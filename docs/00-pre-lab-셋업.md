@@ -12,6 +12,23 @@
 > 2단계가 그 role 에 Bedrock 권한을 붙입니다. 도메인이 없으면 2단계가 아무 일도 하지
 > 않고 넘어가고, Lab 실행 때 `AccessDeniedException` 이 납니다.
 
+> ⚠️ **0단계 — Anthropic 모델 First Time Use 양식** (아직 안 했다면 지금)
+>
+> 이 워크샵은 Claude 모델을 씁니다. 공식 문서는 *"For Anthropic models, you must complete
+> the First Time Use (FTU) form before invoking the model"* 라고 명시합니다 — **계정당 1회 필수**입니다.
+> 안 하면 Lab 1 에서 `AccessDeniedException` 으로 막힙니다.
+>
+> Console → **Amazon Bedrock** → **Model catalog** → Anthropic 모델 선택 → use case 양식 제출
+> (제출 즉시 활성화됩니다. 사용 목적 + 웹사이트/GitHub URL 필요)
+>
+> 이미 이 계정에서 Claude 를 호출해 본 적이 있으면 건너뛰어도 됩니다. 확인:
+> ```bash
+> aws bedrock get-foundation-model-availability \
+>   --model-id anthropic.claude-haiku-4-5-20251001-v1:0 --region us-east-1
+> ```
+> `agreementAvailability.status` 가 `AVAILABLE` 이면 완료 상태입니다.
+> 자세한 내용은 [시작하기 전에](00-시작하기-전에.md) 참고.
+
 ## 1단계. SageMaker Studio 도메인 만들기
 
 1. Console 검색창에 **SageMaker AI** → 좌측 메뉴 **Studio**

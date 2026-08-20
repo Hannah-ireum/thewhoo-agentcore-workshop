@@ -126,11 +126,11 @@ BODY=$(cat <<JSON
       "type": "log",
       "x": 0, "y": 14, "width": 12, "height": 6,
       "properties": {
-        "title": "Prompt Cache Hit Ratio (% · 전 모델 합산 40~60% 가 정상 · 급락 시 회귀 의심)",
+        "title": "Prompt Cache Hit Ratio (% · cache_read / 전체 input · 급락 시 회귀 의심)",
         "region": "${REGION}",
         "view": "timeSeries",
         "stacked": false,
-        "query": "SOURCE 'aws/spans' | filter attributes.gen_ai.request.model like /claude/ | stats sum(attributes.gen_ai.usage.cache_read_input_tokens) * 100 / sum(attributes.gen_ai.usage.input_tokens) as cache_hit_pct by bin(5m)"
+        "query": "SOURCE 'aws/spans' | filter attributes.gen_ai.request.model like /claude/ | stats sum(attributes.gen_ai.usage.cache_read_input_tokens) * 100 / (sum(attributes.gen_ai.usage.input_tokens) + sum(attributes.gen_ai.usage.cache_read_input_tokens) + sum(attributes.gen_ai.usage.cache_write_input_tokens)) as cache_hit_pct by bin(5m)"
       }
     },
     {

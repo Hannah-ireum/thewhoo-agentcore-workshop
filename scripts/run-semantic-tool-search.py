@@ -93,16 +93,19 @@ def main() -> None:
             name="x_amz_bedrock_agentcore_search",
             arguments={"query": args.query},
         )
-        # MCPToolResult 의 content 는 보통 [{"type":"text","text":"..."}] 형태
+        # MCPToolResult 는 TypedDict 계열(dict 상속)입니다 — 속성 접근(getattr)이 아니라
+        # 키 접근을 써야 합니다. getattr 로 읽으면 status=None, content=[] 가 되어
+        # 결과를 영원히 못 꺼냅니다.
+        #   content 형태: [{"type":"text","text":"..."}]
         body_text = ""
-        for c in getattr(result, "content", []) or []:
-            t = (c.get("text") if isinstance(c, dict) else getattr(c, "text", None))
-            if t:
-                body_text = t
+        for c in (result.get("content") or []):
+            txt = (c.get("text") if isinstance(c, dict) else getattr(c, "text", None))
+            if txt:
+                body_text = txt
                 break
         if not body_text:
             body_text = str(result)[:400]
-        print("  status :", getattr(result, "status", None))
+        print("  status :", result.get("status"))
         print("  result :", body_text[:1200])
         print()
 
