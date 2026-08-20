@@ -1,0 +1,76 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "product_search",
+    "version": "1.0.0",
+    "description": "더후(The History of Whoo)에서 판매 중인 상품을 키워드, 카테고리, 가격 상한으로 검색합니다. 사용자 개인 프로필(피부타입, 알러지 등)을 반영하지 않는 범용 검색이므로, 개인화 추천이 필요하면 recommend_products 툴을 사용하세요."
+  },
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "product_search",
+        "summary": "상품 키워드 검색",
+        "description": "키워드(query), 카테고리(category), 최대 가격(price_max) 조건으로 더후(The History of Whoo) 상품을 검색합니다. 평점 높은 순으로 최대 5개 반환합니다.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "검색 키워드. 예: '비건 립밤', '민감성 크림'"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "카테고리 부분 일치. 예: '크림', '립', '샴푸'"
+                  },
+                  "price_max": {
+                    "type": "integer",
+                    "description": "최대 가격(KRW). 예: 30000"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "검색 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {"type": "integer"},
+                    "products": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Product"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "product_id": {"type": "string"},
+          "brand": {"type": "string"},
+          "name": {"type": "string"},
+          "category": {"type": "string"},
+          "price_krw": {"type": "integer"},
+          "highlights": {"type": "array", "items": {"type": "string"}},
+          "average_rating": {"type": "number"}
+        }
+      }
+    }
+  }
+}

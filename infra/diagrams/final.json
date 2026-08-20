@@ -1,0 +1,55 @@
+{
+  "title": "더후(The History of Whoo) AI 챗봇 - 최종 아키텍처",
+  "subtitle": "Amazon Bedrock AgentCore + Strands Agents SDK",
+  "theme": "light",
+  "size": "complex",
+  "nodes": [
+    {"id": "user", "service": "users", "label": "사용자", "sublabel": "Streamlit UI", "x": 0, "y": 3},
+
+    {"id": "orch", "service": "bedrock", "label": "Orchestrator Agent", "sublabel": "Strands · Sonnet 4.6", "x": 1, "y": 3, "container": "runtime"},
+    {"id": "qa", "service": "bedrock", "label": "Q&A Agent", "sublabel": "Haiku · RAG", "x": 2, "y": 1, "container": "runtime"},
+    {"id": "rec", "service": "bedrock", "label": "Recommend Agent", "sublabel": "Haiku · Tools", "x": 2, "y": 3, "container": "runtime"},
+    {"id": "sum", "service": "bedrock", "label": "Summary Agent", "sublabel": "Haiku · Polish", "x": 2, "y": 5, "container": "runtime"},
+
+    {"id": "kb", "service": "bedrock", "label": "Bedrock Knowledge Base", "sublabel": "Lab 0 · Titan Embed v2 · S3 Vectors", "x": 3, "y": 1},
+    {"id": "s3", "service": "s3", "label": "S3 상품 데이터", "sublabel": "beauty_products.jsonl", "x": 4, "y": 1},
+
+    {"id": "gw", "service": "api-gateway", "label": "AgentCore Gateway", "sublabel": "Lab 3 · MCP", "x": 3, "y": 3},
+    {"id": "l1", "service": "lambda", "label": "product_search", "x": 4, "y": 2, "container": "tools"},
+    {"id": "l2", "service": "lambda", "label": "recommend_products", "x": 4, "y": 3, "container": "tools"},
+    {"id": "l3", "service": "lambda", "label": "check_stock", "x": 4, "y": 4, "container": "tools"},
+    {"id": "l4", "service": "lambda", "label": "get_promotion", "x": 4, "y": 5, "container": "tools"},
+
+    {"id": "cog", "service": "cognito", "label": "Amazon Cognito", "sublabel": "OAuth inbound", "x": 3, "y": 6},
+
+    {"id": "mem", "service": "memorydb", "label": "AgentCore Memory", "sublabel": "Lab 2 · 단기+장기(4 strategy)", "x": 0, "y": 6},
+
+    {"id": "cw", "service": "cloudwatch", "label": "CloudWatch GenAI", "sublabel": "Lab 6-8 · Observability + Evaluations", "x": 1, "y": 6}
+  ],
+  "containers": [
+    {"id": "runtime", "type": "generic", "label": "Amazon Bedrock AgentCore Runtime  (Lab 5)", "children": ["orch", "qa", "rec", "sum"]},
+    {"id": "tools", "type": "generic", "label": "Mock Lambda APIs (상품 검색·추천·재고·프로모션)", "children": ["l1", "l2", "l3", "l4"]}
+  ],
+  "connections": [
+    {"source": "user", "target": "orch", "label": "invoke", "style": "solid"},
+
+    {"source": "orch", "target": "qa", "label": "정보성 질문", "style": "solid"},
+    {"source": "orch", "target": "rec", "label": "검색/추천", "style": "solid"},
+    {"source": "orch", "target": "sum", "label": "톤 정리", "style": "solid"},
+
+    {"source": "qa", "target": "kb", "label": "retrieve", "style": "solid"},
+    {"source": "kb", "target": "s3", "label": "ingest", "style": "dashed"},
+
+    {"source": "rec", "target": "gw", "label": "MCP", "style": "solid"},
+    {"source": "gw", "target": "l1", "style": "solid"},
+    {"source": "gw", "target": "l2", "style": "solid"},
+    {"source": "gw", "target": "l3", "style": "solid"},
+    {"source": "gw", "target": "l4", "style": "solid"},
+
+    {"source": "cog", "target": "gw", "label": "Auth", "style": "dashed", "color": "#DD344C"},
+
+    {"source": "orch", "target": "mem", "label": "read/write", "style": "bidirectional", "color": "#C925D1"},
+
+    {"source": "orch", "target": "cw", "label": "traces/metrics", "style": "dashed", "color": "#E7157B", "source_port": "bottom"}
+  ]
+}

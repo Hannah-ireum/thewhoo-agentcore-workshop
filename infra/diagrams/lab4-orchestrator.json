@@ -1,0 +1,24 @@
+{
+  "title": "Lab 4. 여러 전문 에이전트를 한 팀으로 묶기",
+  "subtitle": "Agents-as-Tools 패턴 (Orchestrator + 3 Sub-Agents)",
+  "theme": "light",
+  "size": "standard",
+  "nodes": [
+    {"id": "user", "service": "users", "label": "사용자", "x": 0, "y": 2},
+    {"id": "orch", "service": "bedrock", "label": "Orchestrator", "sublabel": "Sonnet 4.6", "x": 1, "y": 2, "container": "runtime"},
+    {"id": "qa", "service": "bedrock", "label": "Q&A Agent", "sublabel": "Haiku · RAG", "x": 2, "y": 0, "container": "runtime"},
+    {"id": "rec", "service": "bedrock", "label": "Recommend Agent", "sublabel": "Haiku · Tools", "x": 2, "y": 2, "container": "runtime"},
+    {"id": "sum", "service": "bedrock", "label": "Summary Agent", "sublabel": "Haiku · Polish", "x": 2, "y": 4, "container": "runtime"},
+    {"id": "mem", "service": "memorydb", "label": "AgentCore Memory", "x": 0, "y": 4}
+  ],
+  "containers": [
+    {"id": "runtime", "type": "generic", "label": "AgentCore Runtime (Orchestrator + Agents-as-Tools)", "children": ["orch", "qa", "rec", "sum"]}
+  ],
+  "connections": [
+    {"source": "user", "target": "orch", "label": "invoke", "style": "solid"},
+    {"source": "orch", "target": "qa", "label": "정보성 질문", "style": "solid"},
+    {"source": "orch", "target": "rec", "label": "검색/추천", "style": "solid"},
+    {"source": "orch", "target": "sum", "label": "톤 정리", "style": "solid"},
+    {"source": "orch", "target": "mem", "label": "read/write", "style": "bidirectional", "color": "#C925D1"}
+  ]
+}

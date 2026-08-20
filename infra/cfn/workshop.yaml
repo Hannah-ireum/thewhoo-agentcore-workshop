@@ -1,0 +1,242 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  더후(The History of Whoo) AI 챗봇 워크샵 - Workshop Studio blueprint.
+  S3 / IAM Role / Cognito(OAuth) 를 프로비저닝합니다.
+  Bedrock Knowledge Base 의 vector store 는 Amazon S3 Vectors 를 사용하며
+  bootstrap_kb.py 스크립트가 스택 배포 후 생성합니다.
+  Mock Lambda 4종 은 package_lambdas.sh mocks 로 별도 추가됩니다.
+
+Parameters:
+  ParticipantId:
+    Type: String
+    Description: Workshop Studio에서 참가자별로 유니크한 ID (리소스 네이밍 suffix)
+    Default: w001
+
+  EmbeddingModelArn:
+    Type: String
+    Description: Knowledge Base가 사용할 임베딩 모델 ARN
+    Default: arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0
+
+  LambdaCodeBucket:
+    Type: String
+    Description: >
+      package_lambdas.sh prep 이 미리 생성한 S3 버킷 이름.
+      기본 네이밍: thewhoo-code-<ParticipantId>-<AccountId>
+    MinLength: 3
+
+Resources:
+  # ────────────────────────────────────────────────────────────────
+  # 1. S3 : 샘플 상품 데이터 업로드 대상 (Lab 0)
+  # ────────────────────────────────────────────────────────────────
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub thewhoo-data-${ParticipantId}-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ────────────────────────────────────────────────────────────────
+  # 2. IAM Role : Knowledge Base
+  #    S3 Vectors 를 vector store 로 사용하므로 s3vectors 권한 부여
+  # ────────────────────────────────────────────────────────────────
+  KnowledgeBaseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub thewhoo-kb-role-${ParticipantId}
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: kb-inline
+          PolicyDocument:
+            Statement:
+              # Titan 임베딩 모델 호출
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: !Ref EmbeddingModelArn
+              # 샘플 데이터 읽기
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub "${DataBucket.Arn}/*"
+              # S3 Vectors — ingestion(쓰기) + retrieve(읽기) 모두 필요
+              - Effect: Allow
+                Action:
+                  - s3vectors:GetIndex
+                  - s3vectors:ListIndexes
+                  - s3vectors:GetVectors
+                  - s3vectors:ListVectors
+                  - s3vectors:QueryVectors
+                  - s3vectors:PutVectors
+                  - s3vectors:DeleteVectors
+                  - s3vectors:GetVectorBucket
+                Resource: "*"
+
+  # ────────────────────────────────────────────────────────────────
+  # 3. Bedrock Knowledge Base (bootstrap_kb.py 가 생성)
+  # ────────────────────────────────────────────────────────────────
+
+  # ────────────────────────────────────────────────────────────────
+  # 4. Mock Lambda 4종
+  # ────────────────────────────────────────────────────────────────
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub thewhoo-lambda-role-${ParticipantId}
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda 코드 버킷은 package_lambdas.sh prep 이 CFN 배포 전에 생성합니다.
+  # setup_lambda.zip 이 이 버킷에 먼저 올라가 있어야 SetupLambda 생성이 성공합니다.
+
+  # ────────────────────────────────────────────────────────────────
+  # 5. Cognito User Pool : Gateway inbound OAuth (Lab 3)
+  # ────────────────────────────────────────────────────────────────
+  WorkshopUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub thewhoo-pool-${ParticipantId}
+      AutoVerifiedAttributes: []
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+
+  WorkshopUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub thewhoo-client-${ParticipantId}
+      UserPoolId: !Ref WorkshopUserPool
+      GenerateSecret: true
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  # ────────────────────────────────────────────────────────────────
+  # 6. IAM Role : AgentCore Runtime 실행용 (Lab 5)
+  # ────────────────────────────────────────────────────────────────
+  AgentRuntimeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub thewhoo-agent-role-${ParticipantId}
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock-agentcore.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: agent-inline
+          PolicyDocument:
+            Statement:
+              # Bedrock 모델 + KB retrieve + AgentCore 전반
+              # 주의: KB Retrieve 는 IAM action 이름이 'bedrock:Retrieve' 입니다
+              # ('bedrock-agent-runtime:Retrieve' 가 아님 — 서비스 prefix 만 다른 것이
+              # 아니라 IAM 시스템에는 등록되지 않는 식별자라 권한 부여 효과가 없습니다).
+              # CountTokens 는 GenAI Observability 의 토큰 미리보기에서 호출됩니다.
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                  - bedrock:Retrieve
+                  - bedrock:RetrieveAndGenerate
+                  - bedrock:CountTokens
+                  - bedrock-agentcore:*
+                Resource: "*"
+              # Gateway 가 Mock Lambda 4종 호출
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:thewhoo-*-${ParticipantId}
+              # agentcore deploy (direct_code_deploy) zip 업로드
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::bedrock-agentcore-codebuild-sources-${AWS::AccountId}-${AWS::Region}
+                  - !Sub arn:aws:s3:::bedrock-agentcore-codebuild-sources-${AWS::AccountId}-${AWS::Region}/*
+              # CloudWatch Logs (런타임 로그)
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: "*"
+              # X-Ray trace (Lab 6a observability)
+              - Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                Resource: "*"
+              # S3 Vectors retrieve - KB 가 내부적으로 사용하지만 agent runtime
+              # 에서도 재사용 가능하도록
+              - Effect: Allow
+                Action:
+                  - s3vectors:QueryVectors
+                  - s3vectors:GetVectors
+                  - s3vectors:GetIndex
+                  - s3vectors:GetVectorBucket
+                Resource: "*"
+
+Outputs:
+  DataBucket:
+    Description: 샘플 상품 데이터 업로드 대상 S3 버킷 이름
+    Value: !Ref DataBucket
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-DataBucket
+
+  LambdaCodeBucketName:
+    Description: Lambda zip 업로드 대상 버킷 (package_lambdas.sh 에서 사용)
+    Value: !Ref LambdaCodeBucket
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-LambdaCodeBucket
+
+  LambdaRoleArn:
+    Description: Mock Lambda 함수에 부여할 IAM Role ARN
+    Value: !GetAtt LambdaRole.Arn
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-LambdaRoleArn
+
+  CognitoUserPoolId:
+    Value: !Ref WorkshopUserPool
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-UserPoolId
+
+  CognitoClientId:
+    Value: !Ref WorkshopUserPoolClient
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-ClientId
+
+  KnowledgeBaseRoleArn:
+    Description: Knowledge Base 에 부여할 IAM Role ARN (bootstrap_kb.py 가 사용)
+    Value: !GetAtt KnowledgeBaseRole.Arn
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-KnowledgeBaseRoleArn
+
+  AgentRuntimeRoleArn:
+    Value: !GetAtt AgentRuntimeRole.Arn
+    Export:
+      Name: !Sub thewhoo-${ParticipantId}-AgentRuntimeRoleArn

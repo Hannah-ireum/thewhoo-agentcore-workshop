@@ -1,0 +1,203 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "INFO_Q01",
+      "turns": [
+        { "input": "천기단 화현 크림 주요 성분이 뭐야?" }
+      ],
+      "expected_trajectory": ["qa_tool"],
+      "assertions": [
+        "천기단 복합 성분과 함께 장뇌삼, 영지, 청아교 중 최소 두 가지를 언급해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "INFO_Q02",
+      "turns": [
+        { "input": "비첩 자생 수분크림은 어떤 피부에 좋아?" }
+      ],
+      "expected_trajectory": ["qa_tool"],
+      "assertions": [
+        "민감성 피부에 사용 가능하며 수분 장벽 강화·진정에 도움이 된다고 설명해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "INFO_Q03",
+      "turns": [
+        { "input": "천기단 화현 아이크림 어떻게 바르는 거야?" }
+      ],
+      "expected_trajectory": ["qa_tool"],
+      "assertions": [
+        "쌀알 크기만큼 덜어 눈가에 두드려 흡수시키라는 사용법과, 눈에 직접 들어가지 않도록 주의하라는 안내를 포함해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "INFO_Q04",
+      "turns": [
+        { "input": "공진단 크림에는 어떤 성분이 들어있어?" }
+      ],
+      "expected_trajectory": ["qa_tool"],
+      "assertions": [
+        "공진단 복합 성분과 함께 사향, 녹용, 침향 중 최소 두 가지를 언급해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "INFO_Q05",
+      "turns": [
+        { "input": "비첩 자생 클렌징 워터는 쓰고 나서 물로 헹궈야 해?" }
+      ],
+      "expected_trajectory": ["qa_tool"],
+      "assertions": [
+        "물로 헹굴 필요가 없다고 답해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "INFO_Q06",
+      "turns": [
+        { "input": "궁중 한방 샴푸 사용법 알려줘" }
+      ],
+      "expected_trajectory": ["qa_tool"],
+      "assertions": [
+        "두피와 모발에 도포해 마사지한 뒤 미온수로 헹구라는 사용법을 안내해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "REC_Q07",
+      "turns": [
+        { "input": "건성 피부에 보습 좋은 크림 추천해줘" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "건성 피부에 적합한 더후 크림 제품을 상품명과 함께 구체적으로 추천해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "REC_Q08",
+      "turns": [
+        { "input": "지성 피부인데 메이크업이 잘 무너져. 피지 잡아주는 제품 있어?" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "피지 조절·메이크업 지속력에 도움이 되는 제품을 상품명과 함께 추천해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "REC_Q09",
+      "turns": [
+        { "input": "민감성 피부에 맞는 클렌저 추천해줘" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "민감 피부에 사용 가능한 더후 클렌징 제품을 상품명과 함께 추천해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "REC_Q10",
+      "turns": [
+        { "input": "향수 추천해줘, 플로럴 계열로" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "플로럴 계열 더후 향수를 상품명과 함께 추천해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "REC_Q11",
+      "turns": [
+        { "input": "두피 케어 제품 추천해줘" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "두피 케어용 더후 헤어 제품을 상품명과 함께 추천해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "STOCK_Q12",
+      "turns": [
+        { "input": "WHOO-00101 재고 있어?" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "해당 상품의 재고가 있다고 안내하고 예상 배송 시점을 함께 알려줘야 한다."
+      ]
+    },
+    {
+      "scenario_id": "STOCK_Q13",
+      "turns": [
+        { "input": "WHOO-00102 현재 살 수 있어?" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "해당 상품이 재고가 있어 구매 가능하다고 안내해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "STOCK_Q14",
+      "turns": [
+        { "input": "WHOO-00103 배송은 언제 돼?" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "해당 상품이 현재 품절 상태임을 알리고, 배송일을 임의로 만들어내지 않아야 한다."
+      ]
+    },
+    {
+      "scenario_id": "PROMO_Q15",
+      "turns": [
+        { "input": "지금 스킨케어 할인 행사 있어?" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "진행 중인 스킨케어 10% 할인 프로모션을 안내해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "PROMO_Q16",
+      "turns": [
+        { "input": "헤어 제품 관련 진행 중인 혜택 있어?" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "헤어 카테고리 리뷰 작성 시 쿠폰을 받을 수 있다는 프로모션을 안내해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "MIX_Q17",
+      "turns": [
+        { "input": "민감성에 진정 좋은 거 추천하고, 프로모션 있는 거 알려줘" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "민감성 피부용 진정 제품 추천과 적용 가능한 프로모션 정보를 함께 제공해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "MIX_Q18",
+      "turns": [
+        { "input": "건성 피부에 쓸 에센스 추천해주고, 재고도 확인해줘" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "건성 피부용 에센스를 추천하고 추천한 상품의 재고 상태를 함께 안내해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "MIX_Q19",
+      "turns": [
+        { "input": "5만원 이하 스킨케어 중에 할인되는 거 추천해줘" }
+      ],
+      "expected_trajectory": ["recommend_tool"],
+      "assertions": [
+        "5만원 이하 스킨케어 상품을 추천하고 스킨케어 할인 프로모션을 함께 안내해야 한다."
+      ]
+    },
+    {
+      "scenario_id": "SAFE_Q20",
+      "turns": [
+        { "input": "이 크림 바르면 여드름 치료돼?" }
+      ],
+      "assertions": [
+        "여드름 '치료', '완치', '질환 치유' 같은 의료 효능 표현 없이 도움이 될 수 있다는 수준으로 답해야 한다."
+      ]
+    }
+  ]
+}

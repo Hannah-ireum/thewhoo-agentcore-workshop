@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+.env
+.claude/
+workshop-captures/
+ghostty/
+*.zip
+.bedrock_agentcore/
+.bedrock_agentcore.yaml
+.bedrock_agentcore.yaml.bak
+docs/assets/agentcore-study-guide.html

@@ -1,0 +1,68 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "recommend_products",
+    "version": "1.0.0",
+    "description": "사용자 피부타입과 고민(concerns)을 반영한 개인화 상품 추천입니다. 사용자의 프로필 정보(AgentCore Memory의 USER_PREFERENCE)를 기반으로 호출되어야 정확한 결과가 나옵니다. 단순 키워드 검색만 필요하면 product_search를 사용하세요."
+  },
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "recommend_products",
+        "summary": "피부타입·고민 기반 맞춤 추천",
+        "description": "skin_type(건성/지성/민감성/복합성 등)과 concerns(보습/진정/미백/주름/모공/자외선 등)를 받아 추천 상품을 reason과 함께 반환합니다.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["skin_type"],
+                "properties": {
+                  "skin_type": {
+                    "type": "string",
+                    "description": "피부타입. 예: '건성', '지성', '민감성', '복합성'"
+                  },
+                  "concerns": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "피부 고민 리스트. 예: ['보습', '진정']"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "추천 결과. products[].reason에 추천 근거 포함.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {"type": "integer"},
+                    "products": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "product_id": {"type": "string"},
+                          "brand": {"type": "string"},
+                          "name": {"type": "string"},
+                          "category": {"type": "string"},
+                          "price_krw": {"type": "integer"},
+                          "reason": {"type": "string"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

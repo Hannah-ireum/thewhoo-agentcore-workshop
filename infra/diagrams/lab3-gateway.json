@@ -1,0 +1,27 @@
+{
+  "title": "Lab 3. 상품 검색·추천 기능 연결하기",
+  "subtitle": "AgentCore Gateway + MCP (Mock Lambda 4종)",
+  "theme": "light",
+  "size": "standard",
+  "nodes": [
+    {"id": "rec", "service": "bedrock", "label": "Recommend Agent", "sublabel": "Strands · Haiku", "x": 0, "y": 2},
+    {"id": "gw", "service": "api-gateway", "label": "AgentCore Gateway", "sublabel": "MCP", "x": 1, "y": 2},
+    {"id": "cog", "service": "cognito", "label": "Cognito", "sublabel": "OAuth", "x": 1, "y": 4},
+
+    {"id": "l1", "service": "lambda", "label": "product_search", "x": 2, "y": 0, "container": "tools"},
+    {"id": "l2", "service": "lambda", "label": "recommend_products", "x": 2, "y": 1, "container": "tools"},
+    {"id": "l3", "service": "lambda", "label": "check_stock", "x": 2, "y": 2, "container": "tools"},
+    {"id": "l4", "service": "lambda", "label": "get_promotion", "x": 2, "y": 3, "container": "tools"}
+  ],
+  "containers": [
+    {"id": "tools", "type": "generic", "label": "Mock Lambda APIs", "children": ["l1", "l2", "l3", "l4"]}
+  ],
+  "connections": [
+    {"source": "rec", "target": "gw", "label": "MCP call", "style": "solid"},
+    {"source": "cog", "target": "gw", "label": "Auth", "style": "dashed", "color": "#DD344C"},
+    {"source": "gw", "target": "l1", "style": "solid"},
+    {"source": "gw", "target": "l2", "style": "solid"},
+    {"source": "gw", "target": "l3", "style": "solid"},
+    {"source": "gw", "target": "l4", "style": "solid"}
+  ]
+}
