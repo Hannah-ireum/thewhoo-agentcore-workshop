@@ -29,9 +29,15 @@ Day 1 에서 **로컬에서 동작하는 통합 챗봇** 을 만들었다면, Da
 Day 2 의 Lab 5-8 은 **Day 1 에서 만든 인프라(KB / Memory / Gateway / Mock Lambda)** 위에서 동작합니다. 시작 전에 어느 시나리오인지 확인하세요.
 
 > **Day 2 는 AgentCore CLI 를 사용합니다** — Lab 5 배포 도구가 npm 패키지(`@aws/agentcore`)로 바뀌었습니다.
-> Code Editor 에 Node.js 20+ 가 있으면 준비 완료입니다 (`node --version` 으로 확인).
 > CLI 설치는 Lab 5 에서 안내하며, `cdk bootstrap` 은 직접 하지 않아도 됩니다.
 > 이전 워크샵의 Python starter-toolkit 과의 차이는 [새 CLI 이전 가이드](새-cli-이전-가이드.md) 참고.
+>
+> **시작 전 두 도구를 확인하세요:**
+> ```bash
+> node --version    # 20 이상 (Code Editor 기본 포함)
+> uv --version      # Pre-Lab 의 setup-python.sh 가 설치함
+> ```
+> `uv` 가 없으면 Lab 5 의 `agentcore create` 가 `'uv' is required for Python projects` 로 **즉시 멈춥니다**. `uv` 는 CLI 의 필수 전제조건인데 공식 devguide Prerequisites 목록에는 빠져 있어 놓치기 쉽습니다. 없으면 `curl -LsSf https://astral.sh/uv/install.sh | sh` 후 새 터미널을 여세요.
 
 > **시작 전 필수** — 진행 전 `git pull` 로 최신 master 를 받아 주세요. Day 1 을 **이전에 만든 계정에서 이어서** 진행하는 경우, 그 사이 반영된 CFN 변경분(KB Retrieve IAM action 등)을 적용하기 위해 `update-stack` 한 번이 필요합니다 (Lab 5 의 "잘 안 될 때" 표 KB Retrieve 행 참고).
 
