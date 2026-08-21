@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # SageMaker Studio Code Editor 의 실행 role 에 워크샵 권한 추가.
 #
-# Code Editor 에서 직접 돌리면 AccessDenied (self-mutation 금지) 가 납니다.
+# Code Editor 에서 직접 돌리면 AccessDenied 가 납니다.
+#
+# 이유: IAM 에 "자기 role 은 못 고친다" 는 규칙이 있어서가 아닙니다.
+# SageMaker execution role 에 붙는 AmazonSageMakerFullAccess 가 iam 계열로
+# CreateServiceLinkedRole / ListRoles / PassRole 만 주고 **iam:PutRolePolicy
+# 를 주지 않기** 때문입니다 (실측 확인). 권한이 없으니 자기 자신이든 남이든
+# 정책을 붙일 수 없습니다.
+# 그래서 iam:PutRolePolicy 를 가진 CloudShell(WSParticipantRole) 에서 실행합니다.
 # CloudShell (WSParticipantRole) 에서 이 스크립트를 돌리면 IAM 권한이
 # 충분해서 Code Editor role 에 정책을 추가할 수 있습니다.
 #

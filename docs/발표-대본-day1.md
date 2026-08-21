@@ -61,7 +61,7 @@
 >
 > Code Editor 는 반대입니다. 디스크는 5GB 로 넉넉하지만 실행 role 이 제한적이라 Bedrock 호출이 막혀 있습니다.
 >
-> 그래서 **CloudShell 을 건너뛸 수 없습니다.** 인프라 생성 스크립트는 SageMaker role 을 감지하면 스스로 종료합니다. 어차피 권한이 없어서 실패할 걸 아니까요. 그리고 권한 부여 스크립트는 **자기 자신의 role 에 권한을 못 붙입니다.** self-mutation 금지라고 하는데, 반드시 권한이 더 큰 외부에서 해줘야 합니다.
+> 그래서 **CloudShell 을 건너뛸 수 없습니다.** 인프라 생성 스크립트는 SageMaker role 을 감지하면 스스로 종료합니다. 어차피 권한이 없어서 실패할 걸 아니까요. 그리고 권한 부여 스크립트는 Code Editor 안에서 돌릴 수 없습니다. SageMaker role 에 붙는 `AmazonSageMakerFullAccess` 가 **`iam:PutRolePolicy` 를 주지 않기 때문**입니다. 권한 자체가 없으니, 권한이 더 큰 CloudShell 에서 해줘야 합니다.
 >
 > 반대로 **Code Editor 도 건너뛸 수 없습니다.** CloudShell 디스크가 1GB 라 Python 의존성 설치가 용량 부족으로 실패합니다.
 
