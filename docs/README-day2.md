@@ -95,7 +95,9 @@ cd thewhoo-agentcore-workshop
 이 스크립트가 수행하는 것:
 
 * `grant-sagemaker-permissions.sh` — 1단계에서 만들어진 SageMaker Execution Role 에 워크샵 권한 부여 + Bedrock Claude 모델 Marketplace 자동 활성화
-* `onestop.sh` — CFN 스택 (S3, IAM, Cognito, Lambda 4종) + S3 Vectors + Bedrock Knowledge Base + ingestion
+* `onestop.sh` — CFN 스택 (S3, IAM Role, Cognito) + **Mock Lambda 4종** + S3 Vectors + Bedrock Knowledge Base + ingestion
+
+> Mock Lambda 4종은 **CFN 스택에 포함되지 않습니다.** `package_lambdas.sh` 가 `aws lambda create-function` 으로 직접 만듭니다 (템플릿에 `AWS::Lambda::Function` 이 0건). 그래서 정리할 때 스택만 지우면 Lambda 가 남습니다 — `cleanup-all.sh` 가 별도 단계로 삭제합니다.
 
 **3단계 — Code Editor 에서 새 터미널 + Memory + Gateway 생성** (약 3-5분)
 

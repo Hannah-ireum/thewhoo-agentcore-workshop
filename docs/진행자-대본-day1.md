@@ -146,7 +146,9 @@ ImportError: cannot import name 'CacheConfig' from 'strands.models.model'
 ### 자주 나오는 질문
 
 **Q. CloudShell 과 Code Editor 를 왜 둘 다 쓰나요? 같은 걸 두 번 하는 것 같은데요.**
-> 겹치는 건 `git clone` 뿐이고 서로 다른 머신이라 각자 코드를 받아야 합니다. 역할이 갈립니다 — CloudShell 은 권한이 넓어(WSParticipantRole) 인프라를 만들 수 있지만 디스크가 1GB 라 Python 의존성 설치가 안 됩니다. Code Editor 는 반대입니다. 그리고 `grant-sagemaker-permissions.sh` 는 **자기 자신의 role 에 권한을 못 붙이기 때문에**(self-mutation 금지) 반드시 외부에서 실행해야 합니다.
+> 겹치는 건 `git clone` 뿐이고 서로 다른 머신이라 각자 코드를 받아야 합니다. 역할이 갈립니다 — CloudShell 은 권한이 넓어(WSParticipantRole) 인프라를 만들 수 있지만 디스크가 1GB 라 Python 의존성 설치가 안 됩니다. Code Editor 는 반대입니다. 그리고 `grant-sagemaker-permissions.sh` 는 **SageMaker role 자체에 `iam:PutRolePolicy` 권한이 없어서** Code Editor 안에서는 실행할 수 없습니다 — 반드시 CloudShell 에서 돌려야 합니다.
+
+> **정확히 짚어주세요** — "자기 자신은 못 고친다(self-mutation 금지)" 같은 IAM 규칙이 있는 게 아닙니다. `AmazonSageMakerFullAccess` 가 iam 계열로 `CreateServiceLinkedRole`·`ListRoles`·`PassRole` 만 주고 **`iam:PutRolePolicy` 를 주지 않기 때문**입니다 (실측 확인). 권한이 없으니 대상이 자기 role 이든 남의 role 이든 똑같이 실패합니다. CloudShell 의 `WSParticipantRole` 은 이 권한을 갖고 있습니다.
 
 **Q. PID 를 w001 말고 다른 걸 써도 되나요?**
 > 됩니다. 다만 **그 이후 모든 명령에서 같은 값**을 써야 합니다. 한 곳만 다르면 IAM AccessDenied 가 납니다. 단독 진행이면 `w001` 그대로 두는 게 안전합니다.
