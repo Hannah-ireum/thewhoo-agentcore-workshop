@@ -7,7 +7,13 @@ name = "thewhoo-chat"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    # app.py 의 StrandsTelemetry().setup_otlp_exporter() 가 요구하는 것:
+    # opentelemetry.exporter.otlp.proto.http (strands 1.52.0 소스 실측).
+    # distro 가 전이로 끌어오지만 명시해 두어야 distro 버전 변경에 안전합니다.
+    # 이 두 줄이 없으면 배포 컨테이너에서 app.py import 가
+    # ModuleNotFoundError: No module named 'opentelemetry.exporter' 로 실패합니다.
     "aws-opentelemetry-distro",
+    "opentelemetry-exporter-otlp-proto-http>=1.24.0,<2.0",
     "bedrock-agentcore>=1.9.1,<2.0",
     "botocore[crt]>=1.35.0",
     "mcp>=1.27.0,<2.0",
