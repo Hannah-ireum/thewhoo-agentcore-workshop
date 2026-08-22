@@ -147,8 +147,13 @@ def build_reference_inputs(scenario: dict, session_id: str) -> list[dict]:
     if scenario.get("expected_trajectory"):
         ref["expectedTrajectory"] = {"toolNames": scenario["expected_trajectory"]}
 
-    # expectedResponse 는 **trace level** 입니다. traceId 를 주지 않으면 공식
-    # 문서 기준 "세션의 마지막 trace" 에 매칭됩니다 (turn 0 → trace 0 이 아닙니다).
+    # expectedResponse 는 **trace level** 이고, 매핑 규칙이 호출 계층마다 다릅니다:
+    #   데이터셋 러너(--dataset / FileDatasetProvider)
+    #     → 위치 기반. turn 0 → trace 0 (dataset-evaluations-schema.html)
+    #   Evaluate API 직접 호출 (이 스크립트)
+    #     → traceId 를 주면 그 trace, 없으면 "세션의 마지막 trace"
+    #       (ground-truth-evaluations.html: "matched against the last trace")
+    # 이 스크립트는 후자이므로 traceId 없이 넘기면 마지막 trace 에 붙습니다.
     # 현재 골든셋은 전부 단일 턴 + expected_response 미사용(0건)이라 이 분기는
     # 타지 않습니다. 여러 턴에 각각 정답을 주려면 turn 별 traceId 를 알아내
     # reference input 을 여러 개로 나눠야 하므로, 그때 이 함수를 확장하세요.
