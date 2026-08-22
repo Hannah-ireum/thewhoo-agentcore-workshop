@@ -11,3 +11,10 @@ ghostty/
 .bedrock_agentcore.yaml
 .bedrock_agentcore.yaml.bak
 docs/assets/agentcore-study-guide.html
+
+# Python venv (setup-python.sh 가 만듭니다 — 커밋 대상 아님)
+.venv/
+venv/
+
+# 새 AgentCore CLI 산출물 (agentcore create 가 만듭니다)
+agentcore/
