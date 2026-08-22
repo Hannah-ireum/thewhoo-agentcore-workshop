@@ -96,7 +96,7 @@ fi
 echo ""
 echo "[1/11] Agent Runtime 삭제"
 RT_IDS=$(aws bedrock-agentcore-control list-agent-runtimes --region "${REGION}" \
-  --query "agentRuntimes[?contains(agentRuntimeName, 'thewhoo')].agentRuntimeId" \
+  --query "agentRuntimes[?contains(agentRuntimeName, 'thewhoo') || contains(agentRuntimeName, 'Thewhoo')].agentRuntimeId" \
   --output text 2>/dev/null || echo "")
 for rt in ${RT_IDS}; do
   echo "  · ${rt}"

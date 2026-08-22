@@ -33,7 +33,7 @@ echo ""
 
 # Runtime ID / ARN / log group 자동 탐지
 RUNTIME_ID=$(aws bedrock-agentcore-control list-agent-runtimes --region "${REGION}" \
-  --query "agentRuntimes[?contains(agentRuntimeName, 'thewhoo')].agentRuntimeId | [0]" \
+  --query "agentRuntimes[?contains(agentRuntimeName, 'thewhoo') || contains(agentRuntimeName, 'Thewhoo')].agentRuntimeId | [0]" \
   --output text 2>/dev/null || echo "")
 
 if [ -z "${RUNTIME_ID}" ] || [ "${RUNTIME_ID}" = "None" ]; then

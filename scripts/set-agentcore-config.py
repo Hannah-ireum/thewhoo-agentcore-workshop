@@ -20,6 +20,8 @@ import os
 import sys
 from pathlib import Path
 
+import boto3
+
 CONFIG = Path("agentcore/agentcore.json")
 REQUIRED = ["KB_ID", "AGENTCORE_MEMORY_ID", "AGENTCORE_GATEWAY_URL"]
 
@@ -45,6 +47,26 @@ def main() -> int:
     if not runtimes:
         sys.exit("[ERROR] agentcore.json 에 runtimes 항목이 없습니다.")
 
+    # ── executionRoleArn ────────────────────────────────────────────
+    # 생략하면 CDK 가 role 을 자동 생성하는데, 그 role 은 모델 호출 권한만
+    # 갖습니다 (실측: bedrock:InvokeModel + bedrock-agentcore:*ConfigurationBundle*
+    # + logs/xray). Memory·KB·Gateway 권한이 없어서 첫 invoke 가 500 으로
+    # 죽습니다:
+    #   AccessDeniedException ... when calling the CreateEvent operation
+    # `--memory none` 으로 만들었으니 CDK 가 Memory 권한을 줄 이유가 없고,
+    # 우리는 Lab 2 에서 직접 만든 Memory 를 쓰기 때문에 생기는 간극입니다.
+    #
+    # Pre-Lab CFN 이 만든 thewhoo-agent-role-<pid> 를 지정합니다.
+    pid = os.environ.get("PARTICIPANT_ID", "w001")
+    role_arn = os.environ.get("AGENT_ROLE_ARN", "")
+    if not role_arn:
+        try:
+            acct = boto3.client("sts").get_caller_identity()["Account"]
+            role_arn = f"arn:aws:iam::{acct}:role/thewhoo-agent-role-{pid}"
+        except Exception as e:  # 자격증명이 없으면 사용자가 직접 넣도록 안내
+            print(f"[WARN] 계정 ID 조회 실패({e}) — executionRoleArn 을 건너뜁니다.")
+            print("       AGENT_ROLE_ARN 환경변수로 직접 지정할 수 있습니다.")
+
     runtimes[0].update({
         "entrypoint": "app.py",        # codeLocation 기준 상대경로
         "codeLocation": "src/",
@@ -61,6 +83,9 @@ def main() -> int:
         ],
     })
 
+    if role_arn:
+        runtimes[0]["executionRoleArn"] = role_arn
+
     CONFIG.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
     rt = runtimes[0]
@@ -69,6 +94,8 @@ def main() -> int:
     print(f"    entrypoint     : {rt['entrypoint']}")
     print(f"    runtimeVersion : {rt['runtimeVersion']}")
     print(f"    envVars        : {', '.join(e['name'] for e in rt['envVars'])}")
+    if rt.get("executionRoleArn"):
+        print(f"    executionRole  : {rt['executionRoleArn'].split('/')[-1]}")
     print()
     print("다음: agentcore deploy --dry-run -y  →  agentcore deploy -y")
     return 0
