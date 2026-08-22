@@ -56,6 +56,43 @@ if [ "${AUTO_YES}" != "--yes" ]; then
   fi
 fi
 
+# ────────────────────────────────────────────────────────────────
+# AWS CLI 지원 서비스 사전점검 — 반드시 삭제 전에
+#
+# 이 스크립트의 조회는 전부 `2>/dev/null || echo ""` 로 감싸져 있습니다
+# (권한 부족·리소스 없음을 조용히 넘기려는 의도). 그런데 CLI 가 오래되어
+# bedrock-agentcore-control 자체를 모르면 `Invalid choice` 로 죽고, 그 오류도
+# 함께 삼켜져서 **리소스가 멀쩡히 남아 있는데 "없음" 으로 출력되고
+# 마지막 검증까지 "✓ 정리 완료" 가 뜹니다.** 과금이 계속되는데 사용자는
+# 지워졌다고 믿게 되는 최악의 실패 모드입니다.
+# (실측: aws-cli 2.27.31 에는 bedrock-agentcore / -control 이 없고,
+#  2.36 대에는 있습니다.)
+# ────────────────────────────────────────────────────────────────
+CLI_MISSING=""
+for svc in bedrock-agentcore-control s3vectors; do
+  aws "${svc}" help > /dev/null 2>&1 || CLI_MISSING="${CLI_MISSING} ${svc}"
+done
+
+if [ -n "${CLI_MISSING}" ]; then
+  echo ""
+  echo "==================================================================="
+  echo " ✗ 중단 — 이 AWS CLI 가 모르는 서비스:${CLI_MISSING}"
+  echo "==================================================================="
+  echo "  $(aws --version 2>&1 | head -1)"
+  echo ""
+  echo "  이대로 진행하면 조회가 전부 실패하는데 스크립트는 '없음' 으로"
+  echo "  넘어가서, 리소스가 남아 있는데도 '정리 완료' 가 출력됩니다."
+  echo "  (KB / Vector Bucket / Lambda 는 과금이 계속됩니다)"
+  echo ""
+  echo "  CLI v2 를 최신으로 올린 뒤 다시 실행하세요:"
+  echo "    curl -s 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o /tmp/awscliv2.zip"
+  echo "    unzip -q -o /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install --update"
+  echo ""
+  echo "  (Workshop Studio Code Editor / CloudShell 은 보통 최신입니다.)"
+  echo "==================================================================="
+  exit 1
+fi
+
 echo ""
 echo "[1/11] Agent Runtime 삭제"
 RT_IDS=$(aws bedrock-agentcore-control list-agent-runtimes --region "${REGION}" \
