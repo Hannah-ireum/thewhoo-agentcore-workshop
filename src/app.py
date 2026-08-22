@@ -48,13 +48,25 @@ ACTOR_ID = "runtime-user"
 def thewhoo_chat(payload: dict) -> str:
     """AgentCore Runtime 호출 핸들러. 답변 본문(str) 만 반환합니다.
 
+    payload 의 메시지 키는 **호출 경로마다 다릅니다** (실측 확인):
+      - `agentcore invoke "..."`  (새 AgentCore CLI) → {"prompt": "..."}
+      - boto3 InvokeAgentRuntime  (워크샵 스크립트)  → {"message": "..."}
+      공식 Get started 문서의 boto3 예시도 {"prompt": ...} 를 씁니다.
+    두 키를 모두 받아야 CLI 와 스크립트 양쪽에서 동작합니다. `prompt` 만
+    받으면 run-golden-eval.py 가, `message` 만 받으면 agentcore invoke 가
+    "메시지를 입력해주세요." 로 되돌아옵니다.
+
     session_id 는 다음 우선순위로 결정합니다:
       1. AgentCore Runtime 의 X-Amzn-Bedrock-AgentCore-Runtime-Session-Id header
          (agentcore invoke --session-id <id> 또는 boto3 의 runtimeSessionId)
       2. payload 안의 session_id (워크샵 셸 명령 호환)
       3. 새 UUID (둘 다 없을 때)
     """
-    user_message = payload.get("message", "")
+    user_message = (
+        payload.get("message")
+        or payload.get("prompt")
+        or ""
+    )
     session_id = (
         _get_runtime_session_id()
         or payload.get("session_id")

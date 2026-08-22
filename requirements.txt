@@ -3,16 +3,23 @@
 # 있는 major 를 끌어오는 것만 차단하고, minor/patch 는 최신을 받도록 열어 둡니다.
 #
 # 주의: 상한이 major 경계이므로 실제 설치 버전은 시간이 지나면 하한보다 훨씬 위입니다.
-# 2026-08-19 시점 clean install 해석 결과 — strands-agents 1.52.0 /
-# bedrock-agentcore 1.22.0 / bedrock-agentcore-starter-toolkit 0.3.11 /
-# strands-agents-evals 0.3.0 / mcp 1.29.0 / boto3 1.43.74.
-# 이 조합으로 import·Memory 4-strategy·Evaluate·CLI 플래그 호환성을 재확인했습니다.
+# 2026-08-22 시점 clean install 해석 결과 — strands-agents 1.53.0 /
+# bedrock-agentcore 1.22.0 / strands-agents-evals 0.3.0 / mcp 1.29.0 /
+# boto3 1.43.78. 이 조합으로 Pre-Lab~Lab 8 을 실제 AWS 계정에서 완주 검증했습니다.
 # 워크샵 직전에는 새 venv 로 clean install 후 Lab 1·2·5·8 을 한 번 돌려보는 것을 권장합니다.
+#
+# ⚠️ bedrock-agentcore-starter-toolkit 은 **의도적으로 제외**했습니다.
+#    Day 2 는 새 AgentCore CLI(@aws/agentcore, npm)를 쓰는데, 구 toolkit 이
+#    설치되면 **같은 `agentcore` 명령 이름이 충돌**합니다. venv 를 활성화한
+#    상태에서 PATH 상 venv/bin 이 앞서면 구 CLI 가 잡혀서
+#      Error: No such command 'run'.
+#    처럼 Lab 8 의 `agentcore run eval` 이 실패합니다 (실측 재현).
+#    어떤 워크샵 코드도 이 패키지를 import 하지 않으므로 넣을 이유가 없습니다.
+#    (공식 CLI 저장소도 구 toolkit 을 uninstall 하라고 안내합니다.)
 strands-agents>=1.39.0,<2.0
 strands-agents-tools>=0.5.2,<1.0
 strands-agents-evals>=0.1.17,<1.0
 bedrock-agentcore>=1.9.1,<2.0
-bedrock-agentcore-starter-toolkit>=0.3.9,<1.0
 boto3>=1.43.0,<2.0
 botocore>=1.43.0,<2.0
 mcp>=1.27.0,<2.0

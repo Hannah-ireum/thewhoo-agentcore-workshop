@@ -223,17 +223,20 @@ CloudWatch → **GenAI Observability** → Agents → `thewhoo_chat` → Session
 **span 트리에서 짚어줄 것** (실측 확인된 구조):
 
 ```
-AgentCore.Runtime.Invoke          ← HTTP wrapper
+POST /invocations                 ← root span (kind=SERVER)
   invoke_agent Strands Agents     ← ⭐ 여기 attributes 가 가장 풍성
+    execute_event_loop_cycle
     chat us.anthropic.claude-sonnet-4-6      ← Orchestrator
-    execute_tool qa_tool
-      chat us.anthropic.claude-haiku-4-5...  ← 서브에이전트
-      execute_tool kb_retrieve
-        Bedrock Agent Runtime.Retrieve       ← KB 호출
-    execute_tool recommend_tool
-      mcp tools/call product-search___product_search   ← Gateway 경유
-    Bedrock AgentCore.RetrieveMemoryRecords  ← Memory
+    chat us.anthropic.claude-haiku-4-5...    ← 서브에이전트
+    execute_tool recommend_tool / summary_tool
+      mcp tools/list                         ← Gateway 도구 목록 먼저 조회
+      mcp tools/call check-stock___check_stock          ← Gateway 경유
+      execute_tool check-stock___check_stock
+    Bedrock AgentCore.RetrieveMemoryRecords  ← Memory 읽기
+    Bedrock AgentCore.CreateEvent            ← Memory 쓰기
 ```
+
+> **root span 이름 주의** — `AgentCore.Runtime.Invoke` 가 아니라 **`POST /invocations`** 입니다 (실측 확인). 새 CLI 배포에서는 이 이름으로 나옵니다.
 
 > "이 한 장에 어제 만든 게 다 들어 있습니다. Lab 1 의 KB, Lab 2 의 Memory, Lab 3 의 Gateway, Lab 4 의 오케스트레이션."
 
