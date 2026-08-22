@@ -37,7 +37,20 @@ RUNTIME_ID=$(aws bedrock-agentcore-control list-agent-runtimes --region "${REGIO
   --output text 2>/dev/null || echo "")
 
 if [ -z "${RUNTIME_ID}" ] || [ "${RUNTIME_ID}" = "None" ]; then
-  echo "❌ thewhoo 계열 Runtime 을 찾지 못했습니다. Lab 5 의 agentcore deploy 가 끝났는지 확인하세요."
+  # 원인이 둘입니다 — 구분해서 안내해야 합니다.
+  #  (a) Lab 5 를 아직 안 했다 → Runtime 이 실제로 없음
+  #  (b) CLI 가 bedrock-agentcore-control 을 모른다 → 있어도 조회 실패
+  # 위 조회가 `2>/dev/null || echo ""` 라 (b) 도 빈 값으로 나옵니다.
+  if ! aws bedrock-agentcore-control help > /dev/null 2>&1; then
+    echo "❌ 이 AWS CLI 는 bedrock-agentcore-control 을 모릅니다 (Runtime 조회 불가)."
+    echo "   $(aws --version 2>&1 | head -1)"
+    echo "   Runtime 이 이미 배포돼 있어도 이 CLI 로는 찾을 수 없습니다."
+    echo "   CLI v2 를 최신으로 올린 뒤 다시 실행하세요:"
+    echo "     curl -s 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o /tmp/awscliv2.zip"
+    echo "     unzip -q -o /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install --update"
+  else
+    echo "❌ thewhoo 계열 Runtime 을 찾지 못했습니다. Lab 5 의 agentcore deploy 가 끝났는지 확인하세요."
+  fi
   exit 1
 fi
 

@@ -452,3 +452,25 @@ python3 scripts/run-golden-eval.py --case INFO_Q01 --wait 300
 | 에러 metric 이 0 | **정상** | 위 Lab 7 설명 참고 |
 | `No session spans found` | invoke 안 했거나 인덱싱 전 | invoke 후 대기 |
 | KB 가 `DELETE_UNSUCCESSFUL` | 벡터 버킷을 먼저 삭제 | 벡터 버킷+인덱스+role 재생성 후 재삭제 |
+| `print-env.sh` 가 KB 만 출력, Memory/Gateway 누락 | **AWS CLI 가 오래됨** — `bedrock-agentcore-control` 미지원 | 아래 절 참고. 스크립트가 stderr 로 경고합니다 |
+| `aws: error: argument command: Invalid choice` | 같은 원인 | CLI v2 업데이트 |
+
+### ⚠️ AWS CLI 버전 — 조용히 실패하는 유일한 지점
+
+`bedrock-agentcore` / `bedrock-agentcore-control` 은 **비교적 최근에 aws-cli 에 추가된 서비스**입니다. 오래된 CLI 는 이 명령을 아예 모릅니다 (실측: 2.27.31 에는 없고 2.36 대에는 있음).
+
+문제는 **워크샵 스크립트가 조회 실패를 조용히 넘긴다**는 점입니다 (`2>/dev/null || echo ""`). 그래서 이런 일이 벌어집니다:
+
+| 스크립트 | CLI 가 낡았을 때 증상 |
+|---|---|
+| `print-env.sh` | Memory·Gateway·Runtime 이 **있어도** export 가 안 나옴 → "Lab 2 를 안 해서 없는 것" 과 구분 불가 |
+| `create-cloudwatch-dashboard.sh` | "Runtime 을 못 찾았다" 며 종료 → Lab 5 실패로 오진 |
+| `cleanup-all.sh` | 리소스가 **남아 있는데 "✓ 정리 완료"** → 과금 계속 |
+
+세 스크립트 모두 이제 **CLI 지원 여부를 먼저 확인해 정확한 원인을 알려줍니다.** `cleanup-all.sh` 는 아예 삭제 전에 중단합니다(잘못된 성공 보고가 가장 위험하므로).
+
+> **진행자 확인** — Workshop Studio 의 Code Editor·CloudShell 은 보통 최신이라 이 문제가 안 생깁니다. 참가자가 **자기 노트북**으로 진행하는 경우에만 나타납니다. 시작 전에 한 줄로 확인시키세요:
+>
+> ```bash
+> aws bedrock-agentcore-control help > /dev/null 2>&1 && echo "CLI OK" || echo "CLI 업데이트 필요"
+> ```
