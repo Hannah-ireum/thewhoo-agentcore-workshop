@@ -40,7 +40,7 @@ uv tool uninstall bedrock-agentcore-starter-toolkit   # uv
 
 ## 두 CLI 비교
 
-| | Python starter-toolkit (워크샵) | AgentCore CLI (공식 권장) |
+| | Python starter-toolkit (구 워크샵·현재 미사용) | AgentCore CLI (이 워크샵 Day 2) |
 |---|---|---|
 | 패키지 | `bedrock-agentcore-starter-toolkit` (pip, legacy) | `@aws/agentcore` (npm) |
 | 설정 파일 | `.bedrock_agentcore.yaml` | `agentcore/agentcore.json` |
@@ -106,7 +106,7 @@ agentcore --help
 
 ## 명령 대응표
 
-| 하려는 일 | starter-toolkit (워크샵) | AgentCore CLI |
+| 하려는 일 | starter-toolkit (구 방식) | AgentCore CLI (현재) |
 |---|---|---|
 | 프로젝트 생성 | (없음 — 기존 코드에 붙임) | `agentcore create` |
 | 설정 | `agentcore configure --entrypoint ... --name ...` | `agentcore/agentcore.json` 편집 또는 `agentcore add ...` |
