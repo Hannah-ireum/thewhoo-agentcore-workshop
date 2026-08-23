@@ -204,6 +204,8 @@ def main() -> int:
     p.add_argument("--no-warmup", action="store_true")
     p.add_argument("--evaluator", action="append", default=None,
                    help="evaluator id (반복 가능). 미지정 시 기본 3종.")
+    p.add_argument("--report", metavar="PATH",
+                   help="결과를 JSON 으로 저장. eval-report.py 로 HTML 시각화 가능.")
     args = p.parse_args()
 
     evaluators = args.evaluator or DEFAULT_EVALUATORS
@@ -266,6 +268,7 @@ def main() -> int:
     # 6) 시나리오별 evaluate
     overall_pass = True
     summary: list[tuple[str, str]] = []
+    report_scenarios: list[dict] = []
 
     for scenario in scenarios:
         sid = scenario["scenario_id"]
@@ -276,6 +279,9 @@ def main() -> int:
         if sid in invoke_failed:
             print(f"  ✗ invoke 가 실패한 시나리오 — 평가 생략, FAIL 처리")
             summary.append((sid, "INVOKE_FAILED"))
+            report_scenarios.append({"scenario_id": sid, "status": "FAIL",
+                                     "results": {e: {"passed": False,
+                                                     "summary": "invoke 실패"} for e in evaluators}})
             overall_pass = False
             print()
             continue
@@ -290,6 +296,9 @@ def main() -> int:
         if not spans:
             print(f"  ⚠ span 없음 — 인덱싱이 아직 안 됐거나 invoke 실패. skip.")
             summary.append((sid, "NO_SPANS"))
+            report_scenarios.append({"scenario_id": sid, "status": "FAIL",
+                                     "results": {e: {"passed": None,
+                                                     "summary": "span 없음"} for e in evaluators}})
             overall_pass = False
             print()
             continue
@@ -301,6 +310,7 @@ def main() -> int:
         reference_inputs = build_reference_inputs(scenario, session_id)
 
         case_pass = True
+        case_report: dict = {}          # --report 용 evaluator 별 판정
         for evaluator_id in evaluators:
             try:
                 kwargs = {
@@ -324,10 +334,20 @@ def main() -> int:
             gate = DEFAULT_GATE.get(evaluator_id)
             ok, line = gate_check(evaluator_id, results, gate)
             print(line)
+            # 리포트용: "  · Builtin.X: <요약> ✅ PASS" 에서 요약만 추출
+            detail = line.split(":", 1)[1].strip() if ":" in line else line.strip()
+            for mark in (" ✅ PASS", " ❌ FAIL"):
+                detail = detail.replace(mark, "")
+            case_report[evaluator_id] = {"passed": ok, "summary": detail.strip()}
             if not ok:
                 case_pass = False
 
         summary.append((sid, "PASS" if case_pass else "FAIL"))
+        report_scenarios.append({
+            "scenario_id": sid,
+            "status": "PASS" if case_pass else "FAIL",
+            "results": case_report,
+        })
         if not case_pass:
             overall_pass = False
         print()
@@ -340,6 +360,20 @@ def main() -> int:
         marker = {"PASS": "✅", "FAIL": "❌"}.get(status, "⚠️")
         print(f"  {marker} {sid:<25} {status}")
     print()
+
+    if args.report:
+        from pathlib import Path as _P
+        _P(args.report).write_text(json.dumps({
+            "runtime": runtime_id,
+            "started_at": invoke_start.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z"),
+            "evaluators": evaluators,
+            "gate": {k: (sorted(v) if isinstance(v, (set, frozenset)) else v)
+                     for k, v in DEFAULT_GATE.items() if k in evaluators},
+            "scenarios": report_scenarios,
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"📄 리포트 저장: {args.report}")
+        print(f"   HTML 로 보기: python3 scripts/eval-report.py {args.report}")
+        print()
 
     if overall_pass:
         print("✅ 전체 PASS — release ready")
