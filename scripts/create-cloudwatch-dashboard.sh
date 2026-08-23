@@ -156,8 +156,9 @@ BODY=$(cat <<JSON
         "period": 300,
         "view": "timeSeries",
         "metrics": [
-          [ "AWS/Bedrock-AgentCore", "CPUUsed-vCPUHours", "Service", "AgentCore.Runtime", { "label": "vCPU-Hours" } ],
-          [ ".", "MemoryUsed-GBHours", ".", ".", { "label": "GB-Hours", "yAxis": "right" } ]
+          [ "AWS/Bedrock-AgentCore", "CPUUsed-vCPUHours", "Resource", "${RUNTIME_ARN}", "Service", "AgentCore.Runtime", "Name", "${RUNTIME_NAME_DIM}", { "label": "이 Runtime — vCPU-Hours" } ],
+          [ ".", "MemoryUsed-GBHours", ".", ".", ".", ".", ".", ".", { "label": "이 Runtime — GB-Hours", "yAxis": "right" } ],
+          [ ".", "CPUUsed-vCPUHours", "Service", "AgentCore.Runtime", { "label": "계정 전체 — vCPU-Hours", "color": "#c7c7c7" } ]
         ]
       }
     },
