@@ -61,5 +61,13 @@ for fn,t in alltxt.items():
         if re.search(r'pip install[^\n]*bedrock-agentcore-starter-toolkit',line):
             errs.append(("잔재",f"{fn}:{ln}","제거된 패키지 설치 지시"))
 
+# F) 문서 내 '## 단계' heading 중복 (편집 사고로 절이 복제되는 것을 잡는다)
+#    실제로 Lab 5 에서 2단계·3단계가 각각 두 번 나오는 사고가 있었습니다.
+import collections as _c
+for md in sorted(pathlib.Path("docs").rglob("*.md")):
+    cnt=_c.Counter(l for l in md.read_text().splitlines() if re.match(r'^## ',l))
+    for h,n in cnt.items():
+        if n>1: errs.append(("DUP-HEADING",md.name,f"{n}회 중복: {h[:50]}"))
+
 print(f"=== 4차 검사: {len(errs)}건 ===")
 for c,l,i in errs: print(f"  [{c}] {l}  {i}")
