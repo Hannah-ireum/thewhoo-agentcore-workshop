@@ -49,7 +49,7 @@ aws bedrock-agentcore-control get-gateway \
 
 # AGENT_RUNTIME_ARN (Lab 5 이후)
 aws bedrock-agentcore-control list-agent-runtimes \
-  --query "agentRuntimes[?contains(agentRuntimeName, 'thewhoo')].agentRuntimeArn" \
+  --query "agentRuntimes[?contains(agentRuntimeName, 'hewhoo')].agentRuntimeArn" \
   --output text
 ```
 

@@ -429,7 +429,7 @@ python3 scripts/run-golden-eval.py --case INFO_Q01 --wait 300
 ### 자주 나오는 질문
 
 **Q. built-in evaluator 는 몇 개인가요?**
-> 문서에 13개를 표로 정리했고, 라이브 API 는 계속 늘고 있습니다 (2026-08 확인 시 Builtin 18종 + ThirdParty DeepEval 13종). `Builtin.Trajectory*` 계열이 추가돼 `expected_trajectory` 를 직접 채점할 수도 있습니다.
+> 문서에 13개를 표로 정리했고, 라이브 API 는 계속 늘고 있습니다 (2026-08-24 라이브 확인: **Builtin 18종 + ThirdParty 13종** — ThirdParty 는 DeepEval 10 + AutoEval 3). `Builtin.Trajectory*` 계열이 추가돼 `expected_trajectory` 를 직접 채점할 수도 있습니다.
 
 **Q. 커스텀 evaluator 를 만들 수 있나요?**
 > 됩니다. LLM-as-judge 방식과 code-based(Lambda) 방식 둘 다 지원합니다. 정확한 키워드 검증이 필요하면 code-based 가 공식 권장입니다.
