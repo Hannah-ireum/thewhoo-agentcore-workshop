@@ -175,34 +175,35 @@ agentcore deploy -y
 agentcore status
 ```
 
-### 🚨 진행자가 먼저 말해둘 것 — `agentcore dev` 의 브라우저 오류
+### 🚨 진행자가 먼저 말해둘 것 — `agentcore dev` 는 터미널 2개로
 
-Code Editor 에서 `agentcore dev` 를 그냥 실행하면 **반드시** 이 오류가 납니다:
+Code Editor 에서 `agentcore dev` 를 그냥 실행하면 **반드시** 오류가 납니다 (원격 컨테이너라 브라우저가 없음):
 
 ```
 Chat UI: http://localhost:8081
-Press Ctrl+C to stop
-
 Error: spawn xdg-open ENOENT
 ```
 
-> **"에러처럼 보이지만 서버는 떴습니다."** 원격 컨테이너라 브라우저를 열 프로그램이 없어서 나는 것이고, 서버는 정상 실행 중입니다. **참가자가 놀라서 `Ctrl+C` 로 끄는 게 가장 흔한 실수**입니다.
+`--no-browser` 도 안 됩니다 — `This command requires an interactive terminal` (TTY 필요).
 
-**진행자가 시킬 것 — 처음부터 이렇게 안내하세요:**
+**실환경에서 확실히 되는 것은 `--logs` 입니다. 처음부터 이렇게 안내하세요:**
 
 ```bash
-agentcore dev --no-browser
+# 터미널 ① — 서버
+agentcore dev --logs
+#   → "Application startup complete." 가 보이면 성공. 이 창은 그대로 둔다.
+
+# 터미널 ② — Terminal → New Terminal 로 새로 열고 호출
+agentcore dev "천기단 화현 크림 성분 알려줘"
 ```
 
-터미널 안에서 채팅하는 TUI 로 열립니다. 설정이 필요 없어 실습에 가장 안전합니다.
+**이 단계에서 확인할 것은 딱 두 개**라고 못 박아 주세요:
+1. 터미널 ①에 `Application startup complete.`
+2. 터미널 ②에서 답변이 옴
 
-**웹 inspector 화면을 시연하려면** — PORTS 탭에서 출력된 포트를 포워딩하면 됩니다. URL 형태:
-
-```
-https://<studio-id>.studio.<region>.sagemaker.aws/codeeditor/default/ports/8081/
-```
-
-같은 브라우저 세션에서만 열립니다(외부는 403). 화면 공유로 보여줄 때는 이 경로가 유용합니다.
+> **웹 inspector 는 건너뛰어도 됩니다.** 배포 후 Lab 6·7 에서 CloudWatch GenAI Observability 로 훨씬 자세한 span 트리를 봅니다. 로컬 inspector 를 열려고 시간 쓰지 마세요 — 참가자가 여기서 가장 많이 헤맵니다.
+>
+> `agentcore dev "질문"` 이 안 되면 `curl -N -X POST http://localhost:8080/invocations -H 'Content-Type: application/json' -d '{"prompt":"..."}'` 로 대체하면 됩니다 (SSE 스트림으로 응답).
 
 ### ⚠️ 진행자가 미리 알려줄 것 — `pyproject.toml`
 
