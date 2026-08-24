@@ -17,6 +17,22 @@ npm --version
 uv --version       # ⚠️ Python 에이전트 필수
 ```
 
+**npm 전역 설치가 되는지도 함께 확인시키세요:**
+
+```bash
+npm config get prefix        # 홈(~) 아래여야 sudo 없이 설치됩니다
+```
+
+`/usr/lib` 나 `/usr/local` 이 나오면 `npm install -g` 가 `EACCES` 로 실패합니다. **Pre-Lab 의 `setup-python.sh` 가 `~/.npm-global` 로 바꿔 두므로 정상 진행한 참가자는 문제 없습니다.** 건너뛴 참가자만 아래 한 번:
+
+```bash
+mkdir -p ~/.npm-global && npm config set prefix ~/.npm-global
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+> **`sudo npm install -g` 를 절대 쓰지 말라고 미리 말해두세요.** root 소유 파일이 생기면 이후 재설치·업데이트가 전부 막혀서 복구가 더 번거롭습니다.
+
 Code Editor 에는 Node.js 가 기본 포함돼 있습니다 (검증 시 v20.19.6 / npm 11.18.0). **`cdk bootstrap` 은 참가자가 직접 하지 않아도 됩니다** — 첫 `agentcore deploy` 가 필요하면 자동 처리합니다.
 
 ### ⚠️ `uv` — 공식 devguide 에 빠져 있는 전제조건
