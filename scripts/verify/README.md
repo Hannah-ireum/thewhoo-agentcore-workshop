@@ -80,3 +80,35 @@ Cognito User Pool ID, 구 저장소명(`thewhoo-agentcore-workshop`), 이메일.
 
 의도적 주입으로 탐지력을 확인했습니다 — 실제 키·계정ID·경로·Pool ID·JWT
 7종을 전부 잡고, 예시값 3종은 통과했습니다.
+
+## 6축 — 소스 자산 (`check-assets.py`)
+
+문서가 아니라 **코드·데이터 자산**을 검사합니다.
+
+| 검사 | 내용 |
+|---|---|
+| Lambda ↔ openapi | 핸들러가 읽는 `params.get()` 키가 입력 스키마에 선언돼 있나 |
+| 골든셋 사실성 | assertion 이 주장하는 제품·성분 고유명사가 상품 데이터에 실재하나 |
+| CFN ↔ 참조 | 문서·스크립트가 참조하는 IAM role 을 CFN 이 실제로 만드나 |
+| 문서 흐름 | Lab 문서 상단에 전제 조건이 명시돼 있나 |
+| 스크립트 참조 | 스크립트가 호출하는 다른 스크립트가 존재하나 |
+
+> **한국어 토큰 자동 판정은 포기했습니다.** 골든셋 assertion 의 고유명사를
+> 형태소 분석 없이 판정하려 3가지 방식(어휘 대조 / 동적 vocab / 유사도)을
+> 시도했고 전부 조사·활용어를 오탐했습니다. 그래서 **사실 주장에 쓰이는
+> 고유명사만 `FACT_TERMS` 화이트리스트로 고정**하고, `X 성분`·`X 크림` 같은
+> 문맥 패턴으로 목록 밖 신규 용어가 등장하면 경고합니다.
+> 골든셋에 새 성분·제품을 넣을 때는 `FACT_TERMS` 도 갱신하세요.
+
+## 전체 실행 (6축)
+
+```bash
+export PATH="$PWD/.venv/bin:$PATH"
+python scripts/verify/check-claims.py
+python scripts/verify/check-external.py
+bash   scripts/verify/check-commands.sh
+python scripts/verify/check-consistency.py
+python scripts/verify/check-assets.py
+# 보안 게이트는 배포 스테이징을 대상으로 (publish-public.sh 가 자동 실행)
+python scripts/verify/check-secrets.py <스테이징 디렉터리>
+```
