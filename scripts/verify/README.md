@@ -56,3 +56,27 @@ python scripts/verify/check-consistency.py  # 4축
   → 최종 URL 이 원본과 다르면 실패로 처리하도록 수정
 
 즉 "0건"은 검출기의 탐지 범위 안에서만 유효합니다.
+
+## 5축 — 보안 게이트 (`check-secrets.py`)
+
+공개 배포 전에 **민감정보가 있으면 exit 1 로 배포를 막습니다.**
+
+```bash
+python3 scripts/verify/check-secrets.py <배포 스테이징 디렉터리>
+```
+
+탐지 대상: AWS Access Key / Secret / Session Token, Private Key, JWT,
+AWS 계정 ID(12자리), 로컬 홈 경로(`/Users/…`, `/home/…`),
+Cognito User Pool ID, 구 저장소명(`thewhoo-agentcore-workshop`), 이메일.
+
+문서용 예시값(`123456789012`, `user@example.com`, `/home/sagemaker-user` 등)은
+스크립트 안 화이트리스트로 통과시킵니다. **실제 값은 절대 화이트리스트에
+넣지 마세요.**
+
+> **왜 별도 게이트인가** — 이전에는 배포 스크립트가 `grep` 으로 경고만 내고
+> 진행을 막지 않아서 로컬 절대경로가 공개 리포에 올라간 적이 있습니다.
+> 이제 `scripts/publish-public.sh` 가 이 스캔을 통과하지 못하면 **push 자체를
+> 하지 않습니다.**
+
+의도적 주입으로 탐지력을 확인했습니다 — 실제 키·계정ID·경로·Pool ID·JWT
+7종을 전부 잡고, 예시값 3종은 통과했습니다.
