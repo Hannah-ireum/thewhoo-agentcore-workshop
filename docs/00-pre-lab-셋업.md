@@ -54,7 +54,7 @@ cd thewhoo-agentcore-workshop
  ✓ Pre-Lab 셋업 완료
   export PARTICIPANT_ID=w001
   export AWS_REGION=us-east-1
-  export KB_ID=MNUBMHKQMM
+  export KB_ID=<onestop.sh 가 출력한 10자리 KB_ID>
 ```
 
 이어서 SageMaker role 에 권한을 추가합니다. **1단계 도메인이 InService 가 된 뒤에** 실행하세요.
