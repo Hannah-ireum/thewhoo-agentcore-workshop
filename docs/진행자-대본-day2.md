@@ -159,6 +159,35 @@ agentcore deploy -y
 agentcore status
 ```
 
+### 🚨 진행자가 먼저 말해둘 것 — `agentcore dev` 의 브라우저 오류
+
+Code Editor 에서 `agentcore dev` 를 그냥 실행하면 **반드시** 이 오류가 납니다:
+
+```
+Chat UI: http://localhost:8081
+Press Ctrl+C to stop
+
+Error: spawn xdg-open ENOENT
+```
+
+> **"에러처럼 보이지만 서버는 떴습니다."** 원격 컨테이너라 브라우저를 열 프로그램이 없어서 나는 것이고, 서버는 정상 실행 중입니다. **참가자가 놀라서 `Ctrl+C` 로 끄는 게 가장 흔한 실수**입니다.
+
+**진행자가 시킬 것 — 처음부터 이렇게 안내하세요:**
+
+```bash
+agentcore dev --no-browser
+```
+
+터미널 안에서 채팅하는 TUI 로 열립니다. 설정이 필요 없어 실습에 가장 안전합니다.
+
+**웹 inspector 화면을 시연하려면** — PORTS 탭에서 출력된 포트를 포워딩하면 됩니다. URL 형태:
+
+```
+https://<studio-id>.studio.<region>.sagemaker.aws/codeeditor/default/ports/8081/
+```
+
+같은 브라우저 세션에서만 열립니다(외부는 403). 화면 공유로 보여줄 때는 이 경로가 유용합니다.
+
 ### ⚠️ 진행자가 미리 알려줄 것 — `pyproject.toml`
 
 참가자가 자기 프로젝트에 적용할 때 **가장 먼저 만나는 에러**입니다.
