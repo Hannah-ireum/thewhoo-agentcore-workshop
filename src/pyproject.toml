@@ -15,7 +15,13 @@ dependencies = [
     "aws-opentelemetry-distro",
     "opentelemetry-exporter-otlp-proto-http>=1.24.0,<2.0",
     "bedrock-agentcore>=1.9.1,<2.0",
-    "botocore[crt]>=1.35.0",
+    # ⚠️ 하한을 1.43.0 미만으로 내리면 안 됩니다 (requirements.txt 와 동일하게 유지).
+    #    botocore 1.35.0 은 `bedrock-agentcore` 서비스를 아예 모릅니다 (실측):
+    #      UnknownServiceError: Unknown service: 'bedrock-agentcore'
+    #    또 `namespacePath`(Memory prefix 조회)도 최신 botocore 에만 있습니다.
+    #    배포 컨테이너가 낮은 버전으로 해석되면 Runtime 이 import 단계에서 죽습니다.
+    "botocore[crt]>=1.43.0,<2.0",
+    "boto3>=1.43.0,<2.0",
     "mcp>=1.27.0,<2.0",
     "strands-agents>=1.39.0,<2.0",
     "strands-agents-tools>=0.5.2,<1.0",
