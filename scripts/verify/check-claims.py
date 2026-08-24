@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """문서 claim 자동 교차검증 (CLI 트리·라이브 AWS 캐시 사용)."""
 import json,re,pathlib,collections
-SP="/Users/hyewlee/Work/work/shopping-agent/.venv/lib/python3.12/site-packages"
+import sys,glob
+ROOT=pathlib.Path(__file__).resolve().parents[2]
+_c=glob.glob(str(ROOT/".venv/lib/python3*/site-packages"))
+SP=_c[0] if _c else next((p for p in sys.path if p.endswith("site-packages")),"")
 errs=[]
 
 # 1) CLI 트리 (캐시 파일 파싱)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """2차 검증 — 1차가 못 보는 축: quota 수치·URL·코드-문서 일치·명령 실행성."""
-import json,re,pathlib,subprocess,urllib.request
+import json,re,pathlib,subprocess,sys,urllib.request
 errs=[]
 D=pathlib.Path("docs")
 
@@ -58,7 +58,7 @@ for md in D.rglob("*.md"):
             if v not in EXPORTED: errs.append(("ENV",f"{md.name}:{ln}",v))
 
 # E) golden-set 재검증 (SDK 로더)
-r=subprocess.run(["/Users/hyewlee/Work/work/shopping-agent/.venv/bin/python","-c",
+r=subprocess.run([sys.executable,"-c",
   "from bedrock_agentcore.evaluation import FileDatasetProvider as F;"
   "d=F('docs/eval/golden-set.json').get_dataset();"
   "assert len(d.scenarios)==20, len(d.scenarios);"
