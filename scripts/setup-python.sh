@@ -226,6 +226,67 @@ else
   echo "   ⚠ node 없음 — Day 2 Lab 5 (agentcore CLI) 에서 필요합니다."
   echo "     Day 1 만 진행하면 문제 없습니다."
 fi
+
+# ────────────────────────────────────────────────────────────────
+# npm 전역 설치 경로 준비 (Day 2 Lab 5 의 `npm install -g @aws/agentcore`)
+#
+# Code Editor 는 시스템 Node 를 쓰는 경우가 있어 npm prefix 가
+# /usr/lib 나 /usr/local 같은 root 소유 경로를 가리킵니다. 그러면
+# `npm install -g` 가 EACCES 로 실패하고, sudo 로 설치하면 root 소유
+# 파일이 생겨 이후 `agentcore update` 등이 또 막힙니다.
+#
+# 근본 해결: prefix 를 사용자 홈(~/.npm-global)으로 바꾸고 PATH 에 등록합니다.
+# sudo 불필요하고, 이후 모든 npm -g 설치가 홈에 떨어집니다.
+# ────────────────────────────────────────────────────────────────
+if command -v npm > /dev/null 2>&1; then
+  echo ""
+  echo ">> npm 전역 설치 경로 확인"
+  NPM_PREFIX=$(npm config get prefix 2>/dev/null)
+  echo "   현재 prefix : ${NPM_PREFIX}"
+
+  # prefix 가 홈 밖(root 소유 가능)이면 홈으로 옮긴다
+  case "${NPM_PREFIX}" in
+    "${HOME}"*)
+      echo "   ✓ 홈 아래라 sudo 없이 설치 가능"
+      ;;
+    *)
+      if [ -w "${NPM_PREFIX}/lib/node_modules" ] 2>/dev/null; then
+        echo "   ✓ 쓰기 가능 — 그대로 사용"
+      else
+        echo "   ⚠ 쓰기 권한 없음 → ~/.npm-global 로 변경합니다 (sudo 불필요)"
+        mkdir -p "${HOME}/.npm-global"
+        npm config set prefix "${HOME}/.npm-global" > /dev/null 2>&1
+        echo "   ✓ prefix = ${HOME}/.npm-global"
+      fi
+      ;;
+  esac
+
+  # PATH 등록 — 현재 셸 + 이후 새 터미널 모두
+  NPM_BIN="$(npm config get prefix 2>/dev/null)/bin"
+  case ":${PATH}:" in
+    *":${NPM_BIN}:"*) : ;;
+    *) export PATH="${NPM_BIN}:${PATH}" ;;
+  esac
+
+  NPM_BLOCK="
+# --- npm global bin (thewhoo-agentcore-workshop) ---
+export PATH=\"${NPM_BIN}:\$PATH\""
+  for RC in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
+    [ -f "${RC}" ] || continue
+    if ! grep -q "npm global bin (thewhoo-agentcore-workshop)" "${RC}" 2>/dev/null; then
+      printf '%s\n' "${NPM_BLOCK}" >> "${RC}"
+      echo "   ✓ $(basename "${RC}") 에 PATH 등록"
+    fi
+  done
+  echo "   npm bin     : ${NPM_BIN}"
+
+  # 이미 설치돼 있으면 버전 확인, 없으면 안내만 (설치는 Lab 5 에서)
+  if command -v agentcore > /dev/null 2>&1; then
+    echo "   ✓ agentcore 이미 설치됨 ($(agentcore --version 2>/dev/null | head -1))"
+  else
+    echo "   · agentcore 는 Lab 5 에서 설치합니다: npm install -g @aws/agentcore"
+  fi
+fi
 echo ""
 
 # ────────────────────────────────────────────────────────────────
