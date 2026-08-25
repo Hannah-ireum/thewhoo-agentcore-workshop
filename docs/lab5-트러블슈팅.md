@@ -18,17 +18,24 @@
 
 > **`NodeVersionSupportWarning` 은 원인이 아닙니다.** 2027년 이후 SDK 안내일 뿐이고, `aws-cdk` 는 `node >= 18`, `aws-cdk-lib` 는 `node >= 20` 이라 Code Editor 의 Node 20 으로 충분합니다 (npm registry 확인).
 
-관문을 통과했는데도 실패하면 CDK 를 직접 실행해 상세 오류를 확보하세요:
+관문을 통과했는데도 실패하면 CDK 를 직접 실행해 상세 오류를 확보하세요.
+
+`synth` 는 우리 앱을 합성하므로 **`agentcore/cdk` 안에서 실행해야 하고, `dist/` 빌드가 먼저 필요합니다**:
 
 ```bash
 cd ~/thewhoo-agentcore-workshop/agentcore/cdk
+npm run build                          # dist/bin/cdk.js 생성 (없으면 아래가 실패)
 node dist/bin/cdk.js synth 2>&1 | tail -30
+cd ~/thewhoo-agentcore-workshop
 ```
+
+> `bootstrap` 과 반대입니다 — **bootstrap 은 앱 합성이 필요 없어 리포 루트에서**, **`synth` 는 앱을 합성하므로 `cdk` 디렉터리 안에서 빌드 후** 실행합니다.
 
 | 상세 오류 | 조치 |
 |---|---|
 | `ENOSPC` / `no space left` | `df -h /home/sagemaker-user` → `rm -rf ~/.cache/uv ~/.npm` |
-| `Cannot find module` | `cd agentcore/cdk && rm -rf node_modules && npm install` |
+| `Cannot find module .../dist/bin/cdk.js` | `dist/` 가 없습니다 → `npm run build` (위 참고). `bootstrap` 이라면 **리포 루트에서** 실행하세요 |
+| `Cannot find module` (그 외) | `cd agentcore/cdk && rm -rf node_modules && npm install` |
 | `no credentials` / `ExpiredToken` | 터미널을 닫고 **새로 열기** (자격증명 캐시 갱신) |
 | `is not authorized to perform` | CloudShell 에서 `./scripts/grant-sagemaker-permissions.sh` → 새 터미널 |
 
@@ -97,15 +104,15 @@ aws cloudformation wait stack-delete-complete --stack-name CDKToolkit --region u
 
 ```bash
 ACC=$(aws sts get-caller-identity --query Account --output text)
-cd ~/thewhoo-agentcore-workshop/agentcore/cdk
-node node_modules/aws-cdk/bin/cdk bootstrap aws://$ACC/us-east-1
+cd ~/thewhoo-agentcore-workshop
+node agentcore/cdk/node_modules/aws-cdk/bin/cdk bootstrap aws://$ACC/us-east-1
 
 cd ~/thewhoo-agentcore-workshop
 eval "$(./scripts/print-env.sh w001)"
 ./scripts/check-agentcore-config.sh && agentcore deploy -y
 ```
 
-> `npx cdk` 도 `./node_modules/.bin/cdk` 도 쓰지 마세요 — 각각 다른 방식으로 실패합니다. 이유는 [Lab 5 의 2.5단계](06-lab5-서비스로-배포하기.md#25단계-cdk-bootstrap-계정당-1회) 를 보세요.
+> ⚠️ **`agentcore/cdk` 안에서 실행하면 안 됩니다** — 그 `cdk.json` 의 `"app": "node dist/bin/cdk.js"` 를 CDK 가 평가하려다 `Cannot find module` 로 실패합니다 (`dist/` 는 빌드 전에 없음). **리포 루트에서** 실행하세요. `npx cdk` 도 쓰지 마세요 — 출력 없이 조용히 종료됩니다. 자세한 이유는 [Lab 5 의 2.5단계](06-lab5-서비스로-배포하기.md#25단계-cdk-bootstrap-계정당-1회).
 
 > **진행자용** — 이 복구는 시간이 많이 듭니다(10분+). 워크샵 중 여러 참가자가 동시에 겪으면 **Workshop Studio 계정을 새로 발급**하는 편이 빠릅니다. 애초에 🚦 관문을 지키게 하면 이 상황 자체가 생기지 않습니다.
 

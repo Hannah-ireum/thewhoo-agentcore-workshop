@@ -174,8 +174,9 @@ case "${BS}" in
     hint ""
     hint "해결 — 2.5단계를 실행하세요 (계정당 1회, 2~3분):"
     hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
-    hint "  (cd agentcore/cdk && node node_modules/aws-cdk/bin/cdk bootstrap aws://\$ACC/${REGION})"
-    hint "  ※ npx cdk / .bin/cdk 는 각각 다른 방식으로 실패합니다 — 위 경로 그대로 쓰세요"
+    hint "  node agentcore/cdk/node_modules/aws-cdk/bin/cdk bootstrap aws://\$ACC/${REGION}"
+    hint "  ※ 리포 루트에서 실행하세요. agentcore/cdk 안에서 돌리면 cdk.json 의"
+    hint "    app(dist/bin/cdk.js)을 평가하려다 Cannot find module 로 실패합니다"
     ;;
   ROLLBACK_COMPLETE|ROLLBACK_FAILED|DELETE_FAILED|*ROLLBACK_FAILED|CREATE_FAILED)
     bad "CDKToolkit 스택이 '${BS}' 로 고착됐습니다 (배포 불가 상태)"
@@ -184,8 +185,9 @@ case "${BS}" in
     hint "  aws cloudformation delete-stack --stack-name CDKToolkit --region ${REGION}"
     hint "  aws cloudformation wait stack-delete-complete --stack-name CDKToolkit --region ${REGION}"
     hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
-    hint "  (cd agentcore/cdk && node node_modules/aws-cdk/bin/cdk bootstrap aws://\$ACC/${REGION})"
-    hint "  ※ npx cdk / .bin/cdk 는 각각 다른 방식으로 실패합니다 — 위 경로 그대로 쓰세요"
+    hint "  node agentcore/cdk/node_modules/aws-cdk/bin/cdk bootstrap aws://\$ACC/${REGION}"
+    hint "  ※ 리포 루트에서 실행하세요. agentcore/cdk 안에서 돌리면 cdk.json 의"
+    hint "    app(dist/bin/cdk.js)을 평가하려다 Cannot find module 로 실패합니다"
     hint ""
     hint "삭제가 권한 부족으로 실패하면 (ecr:DeleteRepository / DeleteParameter),"
     hint "CloudShell 에서 ./scripts/grant-sagemaker-permissions.sh 를 실행하세요."
