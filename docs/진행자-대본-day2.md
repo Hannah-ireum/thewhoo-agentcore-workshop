@@ -175,35 +175,63 @@ agentcore deploy -y
 agentcore status
 ```
 
-### 🚨 진행자가 먼저 말해둘 것 — `agentcore dev` 는 터미널 2개로
+### 🚨 진행자가 먼저 말해둘 것 — `agentcore dev` 와 `localhost` 함정
 
-Code Editor 에서 `agentcore dev` 를 그냥 실행하면 **반드시** 오류가 납니다 (원격 컨테이너라 브라우저가 없음):
+Code Editor 에서 `agentcore dev` 는 **반드시** 이 오류로 끝납니다 (원격 컨테이너에 브라우저 없음):
 
 ```
 Chat UI: http://localhost:8081
 Error: spawn xdg-open ENOENT
 ```
 
-`--no-browser` 도 안 됩니다 — `This command requires an interactive terminal` (TTY 필요).
+**참가자가 하는 두 가지 실수를 미리 막아주세요:**
 
-**실환경에서 확실히 되는 것은 `--logs` 입니다. 처음부터 이렇게 안내하세요:**
+1. **`Ctrl+C` 로 끈다** — 서버는 떠 있는데 끄면 죽습니다
+2. **`http://localhost:8081` 을 자기 브라우저에 넣는다** — 그 `localhost` 는 **Code Editor 컨테이너 안**입니다. 참가자 노트북 브라우저에서는 자기 PC 를 찾으니 안 열립니다
+
+**처음부터 이렇게 안내하세요 (터미널 2개, 웹 UI 없이):**
 
 ```bash
 # 터미널 ① — 서버
 agentcore dev --logs
-#   → "Application startup complete." 가 보이면 성공. 이 창은 그대로 둔다.
+#   → "Application startup complete." 확인 후 이 창은 그대로
 
-# 터미널 ② — Terminal → New Terminal 로 새로 열고 호출
+# 터미널 ② — Terminal → New Terminal
 agentcore dev "천기단 화현 크림 성분 알려줘"
 ```
 
-**이 단계에서 확인할 것은 딱 두 개**라고 못 박아 주세요:
-1. 터미널 ①에 `Application startup complete.`
-2. 터미널 ②에서 답변이 옴
+**확인할 것은 두 개뿐**이라고 못 박아 주세요: ① 서버 기동 문구 ② 답변 수신.
 
-> **웹 inspector 는 건너뛰어도 됩니다.** 배포 후 Lab 6·7 에서 CloudWatch GenAI Observability 로 훨씬 자세한 span 트리를 봅니다. 로컬 inspector 를 열려고 시간 쓰지 마세요 — 참가자가 여기서 가장 많이 헤맵니다.
+> `--no-browser` 는 `requires an interactive terminal` 로 실패합니다 — 쓰지 마세요.
 >
-> `agentcore dev "질문"` 이 안 되면 `curl -N -X POST http://localhost:8080/invocations -H 'Content-Type: application/json' -d '{"prompt":"..."}'` 로 대체하면 됩니다 (SSE 스트림으로 응답).
+> **웹 inspector 를 시연하려면** PORTS 탭 → Forward a Port → `8081` → 지구본 아이콘. Code Editor 를 띄운 그 브라우저에서만 열립니다(외부 403). 시간 없으면 건너뛰세요 — Lab 6·7 의 CloudWatch Observability 가 훨씬 자세합니다.
+
+### 🚨 `CDK synth failed` 가 나오면 — 원인이 여러 가지입니다
+
+```
+CDK synth failed: node dist/bin/cdk.js: Subprocess exited with error 1
+```
+
+**`NodeVersionSupportWarning` 은 원인이 아닙니다.** 2027년 이후 SDK 안내일 뿐이고, `aws-cdk` 는 node>=18, `aws-cdk-lib` 는 node>=20 이라 Code Editor 의 Node 20 으로 충분합니다(npm registry 확인). 참가자가 이 경고를 원인으로 오해하기 쉬우니 먼저 짚어주세요.
+
+**진단 순서 — 상세 오류를 먼저 확보시키세요:**
+
+```bash
+cd ~/thewhoo-agentcore-workshop/agentcore/cdk
+node dist/bin/cdk.js synth 2>&1 | tail -30
+```
+
+여기서 나오는 메시지로 갈립니다 — `ENOSPC`(디스크), `Cannot find module`(의존성), `no credentials`/`ExpiredToken`(자격증명), `not authorized`(IAM), `cdk-bootstrap ... not found`(bootstrap). Lab 5 문서의 표에 원인별 조치가 있습니다.
+
+> **시간이 없으면 재생성이 가장 확실합니다** (`src/` 는 안 건드립니다):
+> ```bash
+> cd ~/thewhoo-agentcore-workshop && rm -rf agentcore
+> agentcore create --name ThewhooChat --framework Strands --protocol HTTP \
+>   --model-provider Bedrock --memory none --build CodeZip
+> mv ThewhooChat/agentcore ./ && rm -rf ThewhooChat
+> eval "$(./scripts/print-env.sh w001)" && python3 scripts/set-agentcore-config.py
+> agentcore deploy --dry-run -y
+> ```
 
 ### ⚠️ 진행자가 미리 알려줄 것 — `pyproject.toml`
 
