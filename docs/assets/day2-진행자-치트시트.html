@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 2 진행자 치트시트 — 더후 AgentCore 워크샵</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --sub:#5a5a5a; --line:#e3e3e3; --bg:#fff;
+    --accent:#8b6f47;        /* 더후 브랜드 톤 */
+    --accent-soft:#f5f0e8;
+    --say:#0d5c63; --say-bg:#e8f4f5;
+    --warn:#8a4b0a; --warn-bg:#fdf3e7;
+    --stop:#9b1c1c; --stop-bg:#fdeaea;
+    --ok:#1a6b3a; --ok-bg:#eaf6ee;
+    --code-bg:#1e1e1e; --code-ink:#e8e8e8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 0 80px; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    line-height:1.65; font-size:15px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px}
+
+  header{
+    background:linear-gradient(135deg,#8b6f47,#5c4a2f); color:#fff;
+    padding:34px 0 28px; margin-bottom:28px;
+  }
+  header h1{margin:0 0 6px; font-size:26px; letter-spacing:-.4px}
+  header p{margin:0; opacity:.9; font-size:14px}
+  .meta{margin-top:14px; font-size:13px; opacity:.85}
+
+  /* 상단 고정 네비 */
+  nav{
+    position:sticky; top:0; z-index:50; background:rgba(255,255,255,.96);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+    padding:10px 0; margin-bottom:26px;
+  }
+  nav .wrap{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  nav a{
+    text-decoration:none; color:var(--sub); font-size:13px; font-weight:600;
+    padding:5px 11px; border-radius:20px; border:1px solid var(--line);
+  }
+  nav a:hover{color:var(--accent); border-color:var(--accent); background:var(--accent-soft)}
+
+  h2{
+    font-size:20px; margin:44px 0 4px; padding-bottom:8px;
+    border-bottom:2px solid var(--accent);
+  }
+  h2 .time{
+    float:right; font-size:13px; font-weight:normal; color:var(--sub);
+    background:var(--accent-soft); padding:2px 10px; border-radius:12px;
+  }
+  h3{font-size:16px; margin:26px 0 8px; color:var(--accent)}
+  .goal{
+    font-size:14px; color:var(--sub); margin:10px 0 18px;
+    padding:10px 14px; background:#fafafa; border-left:3px solid var(--line);
+  }
+
+  /* 블록 */
+  .box{border-radius:8px; padding:14px 16px; margin:14px 0; border-left:4px solid}
+  .box .tag{
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:.4px;
+    padding:2px 8px; border-radius:10px; margin-bottom:7px;
+  }
+  .say{background:var(--say-bg); border-color:var(--say)}
+  .say .tag{background:var(--say); color:#fff}
+  .say p{margin:6px 0; font-size:15px}
+  .warn{background:var(--warn-bg); border-color:var(--warn)}
+  .warn .tag{background:var(--warn); color:#fff}
+  .stop{background:var(--stop-bg); border-color:var(--stop)}
+  .stop .tag{background:var(--stop); color:#fff}
+  .ok{background:var(--ok-bg); border-color:var(--ok)}
+  .ok .tag{background:var(--ok); color:#fff}
+
+  pre{
+    background:var(--code-bg); color:var(--code-ink); padding:12px 14px;
+    border-radius:6px; overflow-x:auto; font-size:13px; line-height:1.5;
+    font-family:"SF Mono",Menlo,Consolas,monospace; margin:10px 0;
+  }
+  code{
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:.9em;
+    background:#f0f0f0; padding:1px 5px; border-radius:3px;
+  }
+  pre code{background:none; padding:0; color:inherit; font-size:inherit}
+
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:14px}
+  th,td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top}
+  th{background:#fafafa; font-weight:700; font-size:13px}
+  td.n{text-align:center; white-space:nowrap; font-weight:700; color:var(--accent)}
+
+  ol,ul{margin:10px 0; padding-left:22px}
+  li{margin:5px 0}
+  .hl{background:#fff3a3; padding:0 3px; border-radius:2px; font-weight:600}
+  .muted{color:var(--sub); font-size:13px}
+
+  /* 인쇄 */
+  @media print{
+    nav{display:none} header{background:#5c4a2f !important; -webkit-print-color-adjust:exact}
+    body{font-size:11pt} h2{page-break-after:avoid} .box,pre,table{page-break-inside:avoid}
+    *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Day 2 진행자 치트시트</h1>
+    <p>더후(The History of Whoo) AI 에이전트 워크샵 — 배포·운영·품질</p>
+    <div class="meta">
+      총 <strong>2시간 40분</strong> ·
+      <span class="hl" style="color:#1a1a1a">🗣️ 말할 것</span> /
+      <span style="background:#fdf3e7;color:#8a4b0a;padding:0 4px;border-radius:2px">⚠️ 미리 경고</span> /
+      <span style="background:#fdeaea;color:#9b1c1c;padding:0 4px;border-radius:2px">🛑 반드시 시킬 것</span>
+    </div>
+  </div>
+</header>
+
+<nav><div class="wrap">
+  <a href="#core">핵심 3문장</a>
+  <a href="#pre">시작 전 점검</a>
+  <a href="#lab5">Lab 5 배포</a>
+  <a href="#lab6">Lab 6 관측</a>
+  <a href="#lab7">Lab 7 대시보드</a>
+  <a href="#metrics">└ 지표 읽는 법</a>
+  <a href="#lab8">Lab 8 평가</a>
+  <a href="#evalread">└ 평가 해석</a>
+  <a href="#trap">함정 요약</a>
+  <a href="#close">마무리</a>
+</div></nav>
+
+<div class="wrap">
+
+<!-- ══════════ 핵심 ══════════ -->
+<h2 id="core">이것만 기억하세요 — 오늘의 핵심 3문장</h2>
+<div class="goal">
+  Day 2 는 "어제 만든 챗봇을 <strong>서비스로 만드는 날</strong>" 입니다.
+  세부 설명이 막히면 이 세 문장으로 돌아오세요.
+</div>
+
+<table>
+  <tr><th style="width:60px">순서</th><th>한 문장</th><th style="width:130px">해당 Lab</th></tr>
+  <tr><td class="n">1</td><td><strong>배포</strong> — 내 터미널에서만 돌던 걸 누구나 부를 수 있는 HTTPS 엔드포인트로 만든다</td><td>Lab 5</td></tr>
+  <tr><td class="n">2</td><td><strong>관측</strong> — 안에서 무슨 일이 있었는지 볼 수 있어야 운영이 된다</td><td>Lab 6·7</td></tr>
+  <tr><td class="n">3</td><td><strong>품질</strong> — 배포할 때마다 답변이 나빠지지 않았는지 자동으로 확인한다</td><td>Lab 8</td></tr>
+</table>
+
+<div class="box say">
+  <span class="tag">🗣️ 오프닝에서 말할 것</span>
+  <p>"어제 만든 챗봇은 <strong>여러분 터미널에서만</strong> 돌아갑니다. 노트북을 닫으면 끝이죠. 오늘은 이걸 서비스로 만듭니다."</p>
+  <p>"특히 3번이 실무에서 가장 자주 빠집니다. <strong>LLM 앱은 코드를 안 바꿔도 품질이 변합니다.</strong> 그래서 회귀 테스트가 필수입니다."</p>
+</div>
+
+<h3>시간이 밀리면 — 이 순서로 버리세요</h3>
+<table>
+  <tr><th style="width:80px">우선순위</th><th>내용</th><th>판단</th></tr>
+  <tr><td class="n">버림 1</td><td>Lab 5 <strong>3단계</strong> <code>agentcore dev</code> (로컬 실행)</td><td>배포가 목표이므로 없어도 무관. 설명만 하고 넘어가세요</td></tr>
+  <tr><td class="n">버림 2</td><td>Lab 8 <strong>골든셋 20문항 전체</strong> 실행</td><td><code>--case INFO_Q01</code> 단건으로 축소. 인덱싱 대기만 5분+ 입니다</td></tr>
+  <tr><td class="n">버림 3</td><td>Lab 5 <strong>7단계</strong> Prompt Caching 관찰</td><td>Lab 7 대시보드에서 같은 숫자를 더 잘 보여줍니다</td></tr>
+  <tr><td class="n">사수</td><td>Lab 5 <strong>0·2·4단계</strong> · Lab 7 <strong>대시보드</strong> · Lab 8 <strong>1건 평가</strong></td><td>이 셋이 빠지면 Day 2 가 성립하지 않습니다</td></tr>
+</table>
+
+<!-- ══════════ 시작 전 ══════════ -->
+<h2 id="pre">시작 전 점검 <span class="time">10분</span></h2>
+
+<div class="box stop">
+  <span class="tag">🛑 전원에게 시킬 것</span>
+  <pre><code>cd ~/thewhoo-agentcore-workshop
+source .venv/bin/activate
+eval "$(./scripts/print-env.sh w001)"
+echo "KB=$KB_ID  MEM=$AGENTCORE_MEMORY_ID  GW=$AGENTCORE_GATEWAY_URL"</code></pre>
+  <p><strong>세 값이 다 나와야</strong> 진행 가능합니다. 하나라도 비면 그 참가자만 따로
+  <code>README-day2.md</code> 의 <strong>시나리오 B 패스트트랙</strong>으로 보내세요 (20~25분).
+  전체 진행을 세우지 마세요.</p>
+</div>
+
+<table>
+  <tr><th>확인</th><th>정상</th><th>아니면</th></tr>
+  <tr><td><code>node --version</code></td><td>v20 이상</td><td>Day 2 진행 불가</td></tr>
+  <tr><td><code>uv --version</code></td><td>버전 출력</td><td><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code> → 새 터미널</td></tr>
+  <tr><td><code>npm config get prefix</code></td><td>홈(<code>~</code>) 아래</td><td><code>npm config set prefix ~/.npm-global</code></td></tr>
+</table>
+
+<div class="box warn">
+  <span class="tag">⚠️ 미리 말해두기</span>
+  <p><strong>"<code>sudo npm install -g</code> 는 절대 쓰지 마세요."</strong>
+  root 소유 파일이 생기면 이후 재설치가 전부 막혀서 복구가 더 번거롭습니다.</p>
+  <p class="muted">참가자 질문 예상 — <strong>"Python 워크샵인데 왜 npm 인가요?"</strong>
+  → "CLI 만 Node 로 배포됩니다. 에이전트 코드는 그대로 Python 입니다. CLI 가 내부적으로 AWS CDK 를 쓰기 때문입니다."</p>
+</div>
+
+<!-- ══════════ Lab 5 ══════════ -->
+<h2 id="lab5">Lab 5. Runtime 배포 <span class="time">45분</span></h2>
+<div class="goal">목표: <strong>HTTPS 엔드포인트가 생기고, 다른 시스템이 SigV4 로 호출할 수 있다.</strong></div>
+
+<div class="box say">
+  <span class="tag">🗣️ 왜 Lambda 가 아닌가 (3가지)</span>
+  <p>1. <strong>세션 유지</strong> — 에이전트 대화는 상태가 있습니다. Lambda 는 stateless 라 세션마다 외부 저장소가 필요합니다.</p>
+  <p>2. <strong>긴 실행</strong> — 멀티턴 + 도구 호출이 이어지면 15분을 넘길 수 있습니다.</p>
+  <p>3. <strong>관측 자동 연결</strong> — CloudWatch Logs·X-Ray·Transaction Search 를 배포가 알아서 붙입니다.</p>
+</div>
+
+<div class="box say">
+  <span class="tag">🗣️ 이번엔 IaC 라는 점을 짚으세요</span>
+  <p>"새 CLI 는 '배포 스크립트' 가 아니라 <strong>프로젝트 전체를 JSON 으로 선언</strong>하는 방식입니다. CDK 가 CloudFormation 으로 바꿔 적용합니다."</p>
+  <p>"그래서 좋은 점 — <code>remove</code> 후 <code>deploy</code> 하면 <strong>정확히 되돌아갑니다.</strong> 손으로 만든 리소스는 이게 안 되죠."</p>
+</div>
+
+<h3>진행 순서 — 이 5개만 시키면 됩니다</h3>
+<table>
+  <tr><th style="width:52px">단계</th><th>명령</th><th>확인할 것</th></tr>
+  <tr><td class="n">0</td><td><code>./node_modules/.bin/cdk bootstrap aws://$ACC/us-east-1</code></td><td><code>✅ ... bootstrapped</code></td></tr>
+  <tr><td class="n">1·2</td><td><code>npm install -g @aws/agentcore</code> → <code>agentcore create</code> → <code>set-agentcore-config.py</code></td><td>출력 <strong>5줄 전부</strong></td></tr>
+  <tr><td class="n">🚦</td><td><code>./scripts/check-agentcore-config.sh</code></td><td><code>✓ 사전점검 통과</code></td></tr>
+  <tr><td class="n">4</td><td><code>agentcore deploy -y</code></td><td><code>Runtime: READY</code></td></tr>
+  <tr><td class="n">5</td><td><code>agentcore invoke "천기단 화현 크림 성분 알려줘"</code></td><td>한국어 답변</td></tr>
+</table>
+
+<div class="box stop">
+  <span class="tag">🛑 0단계를 반드시 먼저</span>
+  <p><strong>Workshop Studio 계정은 항상 새 계정이라 CDK bootstrap 이 없습니다.</strong>
+  <code>agentcore deploy -y</code> 의 자동 bootstrap 은 이 상태에서 실패하고, 그 실패가
+  <code>CDKToolkit</code> 스택을 못 쓰는 상태로 남겨 <strong>이후 모든 배포를 막습니다.</strong> 복구는 10분+ 입니다.</p>
+  <pre><code>cd ~/thewhoo-agentcore-workshop/agentcore/cdk
+ACC=$(aws sts get-caller-identity --query Account --output text)
+./node_modules/.bin/cdk bootstrap aws://$ACC/us-east-1</code></pre>
+  <p>⚠️ <strong><code>npx cdk</code> 로 안내하지 마세요.</strong> Code Editor 에서
+  <span class="hl">출력 없이 조용히 종료</span>되어 참가자가 "됐다" 고 착각합니다.
+  <code>./node_modules/.bin/cdk</code> 를 직접 쓰게 하세요.</p>
+</div>
+
+<div class="box stop">
+  <span class="tag">🛑 3·4단계 전에 관문을 통과시키세요</span>
+  <p>Lab 5 사고의 <strong>대부분이 이 한 가지</strong>에서 나옵니다. <code>✓ 사전점검 통과</code> 가 나온 사람만 다음으로 보내세요.</p>
+  <p><strong>왜</strong> — <code>agentcore create</code> 는 <code>codeLocation</code> 을 자기 스캐폴딩(<code>app/&lt;이름&gt;/</code>)으로 둡니다.
+  <code>set-agentcore-config.py</code> 를 건너뛰면 CLI 가 <strong>없는 디렉터리</strong>를 대상으로 동작하는데
+  오류가 원인을 전혀 알려주지 않습니다:</p>
+  <table style="margin-top:8px">
+    <tr><th>명령</th><th>나오는 오류</th><th>진짜 원인</th></tr>
+    <tr><td><code>agentcore dev</code></td><td><code>Failed to create venv: unknown error</code></td><td rowspan="2">없는 경로</td></tr>
+    <tr><td><code>agentcore deploy</code></td><td><code>CDK synth failed</code></td></tr>
+  </table>
+</div>
+
+<div class="box warn">
+  <span class="tag">⚠️ 3단계 웹 UI — Day 1 Streamlit 처럼 안 됩니다</span>
+  <p>참가자가 반드시 시도하고 반드시 실패합니다. <strong>미리 막으세요.</strong></p>
+  <p><code>agentcore dev</code> UI 는 <strong><code>127.0.0.1</code> 전용 바인드 + Host 헤더 allowlist(403)</strong>
+  두 겹이라 포트 포워딩만으로는 <code>ECONNREFUSED 0.0.0.0:8081</code> 이 납니다.</p>
+  <p><strong>→ UI 는 선택으로 넘기고</strong> <code>agentcore dev "&lt;질문&gt;"</code> CLI 로 확인시키세요.
+  굳이 보려면 <code>python3 scripts/uiproxy.py 8092 8081</code> 을 띄우고 <strong>8092</strong> 를 포워딩합니다
+  (터미널 3개 — 시연에는 권하지 않습니다).</p>
+</div>
+
+<div class="box warn">
+  <span class="tag">⚠️ 참가자가 하는 실수 2가지</span>
+  <p>1. <code>xdg-open ENOENT</code> 를 보고 <code>Ctrl+C</code> 로 끈다 → <strong>서버는 떠 있습니다.</strong></p>
+  <p>2. 루트에서 <code>rm -rf .venv</code> 를 한다 → <strong>워크샵 venv 가 지워집니다.</strong>
+  반드시 <code>pwd</code> 로 <code>src</code> 안인지 확인시키세요.</p>
+</div>
+
+<h3>🗣️ 5단계에서 짚을 것 — "이게 왜 중요한가"</h3>
+<div class="box say">
+  <span class="tag">🗣️ 말할 것</span>
+  <p>"방금 <code>agentcore invoke</code> 로 부른 건 <strong>내 노트북이 아니라 AWS 위에서 돌고 있는 에이전트</strong>입니다."</p>
+  <p>"그리고 이건 CLI 전용이 아닙니다. <strong>boto3 로 부를 수 있다는 게 핵심</strong>입니다 — 사내 백엔드, 앱, 다른 팀 시스템이 같은 방식으로 붙습니다."</p>
+  <p class="muted">→ 문서의 SDK 호출 예시를 한 번 돌려 보여주면 "서비스가 됐다" 가 체감됩니다.</p>
+</div>
+
+<!-- ══════════ Lab 6 ══════════ -->
+<h2 id="lab6">Lab 6. Observability <span class="time">30분</span></h2>
+<div class="goal">목표: <strong>한 건의 호출에서 무슨 일이 있었는지 span 트리로 본다.</strong></div>
+
+<div class="box say">
+  <span class="tag">🗣️ 두 도구의 역할 분담을 먼저</span>
+  <p>"<strong>Observability 는 한 건을 깊게</strong> 보는 도구입니다. <strong>대시보드(Lab 7)는 전체가 정상인가</strong>를 봅니다."</p>
+  <p>"운영에서는 <strong>대시보드에서 이상을 발견하고 → Observability 에서 원인을 찾습니다.</strong>"</p>
+</div>
+
+<h3>span 트리에서 짚어줄 것</h3>
+<pre><code>POST /invocations                          ← root
+  invoke_agent Strands Agents              ← ⭐ attributes 가 가장 풍성
+    execute_event_loop_cycle
+    chat us.anthropic.claude-sonnet-4-6    ← Orchestrator
+    chat us.anthropic.claude-haiku-4-5…    ← 서브에이전트
+    execute_tool / mcp tools/call          ← Gateway 도구
+    Bedrock AgentCore.RetrieveMemoryRecords ← Memory 읽기
+    Bedrock AgentCore.CreateEvent           ← Memory 쓰기</code></pre>
+
+<div class="box warn">
+  <span class="tag">⚠️ span 이름 주의</span>
+  <p><strong><code>orchestrator</code> 나 <code>LLM</code> 이라는 span 은 없습니다.</strong>
+  모델 호출 span 의 이름은 <code>chat &lt;모델ID&gt;</code> 입니다.
+  <span class="hl">Sonnet = Orchestrator, Haiku = 서브에이전트</span> 로 구분하세요.</p>
+</div>
+
+<div class="box say">
+  <span class="tag">🗣️ 이 화면에서 고객이 감탄하는 지점</span>
+  <p>"<strong>코드를 한 줄도 안 넣었는데</strong> 이 트리가 나옵니다. 배포할 때 자동으로 붙었습니다."</p>
+  <p>"<code>mcp tools/list</code> 가 보이시죠? 에이전트가 Gateway 에 붙을 때 <strong>도구 목록을 먼저 조회</strong>한 뒤 호출합니다."</p>
+</div>
+
+<div class="box warn">
+  <span class="tag">⚠️ <code>agentcore logs</code> 가 멈춘 것처럼 보입니다</span>
+  <p><code>--since</code> 없이 쓰면 <strong>스트리밍 모드</strong>라 <code>tail -f</code> 처럼 새 로그를 계속 기다립니다.
+  호출이 없으면 아무것도 안 나옵니다 — 고장이 아닙니다.</p>
+  <pre><code>agentcore logs --since 1h -n 50      # ← 이걸 쓰게 하세요 (검색 모드)</code></pre>
+</div>
+
+<!-- ══════════ Lab 7 ══════════ -->
+<h2 id="lab7">Lab 7. 대시보드 <span class="time">30분</span></h2>
+<div class="goal">목표: <strong>"지금 전체가 정상인가" 를 30초 안에 판단하는 화면을 만든다.</strong></div>
+
+<div class="box ok">
+  <span class="tag">✅ 진행 순서 팁</span>
+  <p>대시보드를 만든 직후 열지 말고, <code>simulate-traffic.sh --quick</code> 을 걸어둔 채
+  <strong>Lab 8 을 먼저</strong> 하세요. 돌아오면 위젯이 채워져 있습니다.
+  "빈 화면 보며 기다리는" 시간이 없어집니다.</p>
+</div>
+
+<h3>🗣️ 대시보드 설명 3분 흐름 — 위젯을 나열하지 말고 이 순서로</h3>
+<table>
+  <tr><th style="width:44px"></th><th>말할 것</th><th style="width:64px">위젯</th></tr>
+  <tr><td class="n">1</td><td>"장애가 났는지 <strong>30초 안에 판단</strong>합니다" — 에러 0, Invocations 올라감</td><td>①</td></tr>
+  <tr><td class="n">2</td><td>"느려졌나. <strong>P50 은 평범한 사용자, P99 는 가장 느린 1%</strong>"</td><td>②</td></tr>
+  <tr><td class="n">3</td><td>"돈이 어디서 나가나. <strong>Haiku 가 훨씬 많은 게 의도된 설계</strong> — 무거운 일을 값싼 모델에 넘겼다는 증거"</td><td>④</td></tr>
+  <tr><td class="n">4</td><td>⭐ "캐시가 듣고 있나 — <strong><code>input_tokens</code> 69</strong> vs <strong><code>cache_read</code> 16,393</strong>"</td><td>⑤</td></tr>
+  <tr><td class="n">5</td><td>"코드가 터졌나 — <strong>비어 있는 게 정상</strong>"</td><td>⑦</td></tr>
+</table>
+
+<div class="box say">
+  <span class="tag">🗣️ 4번이 이 Lab 의 하이라이트</span>
+  <p>"캐시를 켰습니다" 라고 <strong>말로 하지 마세요.</strong> 숫자를 보여주세요:</p>
+  <table style="margin-top:8px">
+    <tr><th>모델</th><th><code>input_tokens</code></th><th><code>cache_read</code></th></tr>
+    <tr><td>Sonnet (Orchestrator)</td><td><strong>69</strong></td><td><strong>16,393</strong></td></tr>
+    <tr><td>Haiku (서브에이전트)</td><td>71,631</td><td>0</td></tr>
+  </table>
+  <p style="margin-top:8px"><code>inputTokens</code> 는 <strong>캐시되지 않은 토큰만</strong> 셉니다.
+  그래서 <strong>69 라는 작은 숫자 자체가</strong> 캐시가 작동한다는 직접 증거입니다.</p>
+</div>
+
+<h3 id="metrics">📊 지표 하나하나 읽는 법 — "이 숫자가 무슨 뜻인가"</h3>
+<p class="muted">고객이 "그래서 이 그래프를 어떻게 봐야 하나요" 라고 물을 때 쓰는 표입니다.
+<strong>각 지표마다 ① 무엇을 재나 ② 정상 범위 ③ 이상하면 무슨 뜻인가</strong> 를 짚으세요.</p>
+
+<table>
+  <tr><th style="width:150px">지표</th><th style="width:200px">무엇을 재나</th><th style="width:130px">정상</th><th>이상하면</th></tr>
+  <tr>
+    <td><code>Invocations</code></td>
+    <td>Runtime 이 받은 <strong>요청 수</strong> (분당)</td>
+    <td>트래픽만큼</td>
+    <td><strong>갑자기 0</strong> → 엔드포인트 장애 또는 클라이언트가 안 부름.
+    <strong>급증</strong> → 재시도 폭주 의심 (⑦ 로그 확인)</td>
+  </tr>
+  <tr>
+    <td><code>UserErrors</code></td>
+    <td><strong>4xx</strong> — 클라이언트 잘못 (잘못된 요청·인증 실패)</td>
+    <td><strong>0</strong></td>
+    <td>올라가면 <strong>호출하는 쪽</strong> 문제. payload 스키마·SigV4 서명·세션 ID 길이를 봅니다</td>
+  </tr>
+  <tr>
+    <td><code>SystemErrors</code></td>
+    <td><strong>5xx</strong> — 서버(내 코드·권한) 잘못</td>
+    <td><strong>0</strong></td>
+    <td>⭐ <strong>가장 위험한 신호.</strong> 대개 <strong>권한 부족</strong>이거나 코드 예외.
+    즉시 ⑦ 로그 → Observability span 으로 내려갑니다</td>
+  </tr>
+  <tr>
+    <td><code>Throttles</code></td>
+    <td>계정 한도 초과로 <strong>거절</strong>된 요청</td>
+    <td><strong>0</strong></td>
+    <td>동시 세션·TPS 한도 초과. 병렬 요청을 줄이거나 Service Quotas 증가 요청</td>
+  </tr>
+  <tr>
+    <td><code>Latency P50</code></td>
+    <td><strong>중간값</strong> — 절반은 이보다 빠름. <span class="hl">평범한 사용자 체감</span></td>
+    <td>이 에이전트는 수 초대</td>
+    <td>P50 자체가 오르면 <strong>전체가 느려진 것</strong> — 모델 변경·프롬프트 증가·KB 지연</td>
+  </tr>
+  <tr>
+    <td><code>Latency P95 / P99</code></td>
+    <td>느린 5% / 1%. <span class="hl">최악의 경험</span></td>
+    <td>P50 의 2~3배 이내</td>
+    <td>⭐ <strong>P50 은 그대로인데 P99 만 뛰면</strong> "대부분 빠른데 일부가 심하게 느리다" —
+    이 에이전트에서는 <strong>서브에이전트를 몇 개 탔는지 · Gateway 도구를 몇 번 불렀는지</strong>에 따라 갈립니다</td>
+  </tr>
+  <tr>
+    <td><code>Sessions</code></td>
+    <td><strong>대화 세션 수</strong> (사용자 수에 가까움)</td>
+    <td>Invocations 보다 적음</td>
+    <td>⭐ <strong>Invocations ÷ Sessions = 평균 턴 수.</strong>
+    이 값이 1 에 가까우면 <strong>멀티턴이 안 쓰이고 있다</strong>는 뜻 — Memory 투자가 낭비일 수 있습니다</td>
+  </tr>
+  <tr>
+    <td><code>input_tokens</code></td>
+    <td>모델에 <strong>새로 보낸</strong> 토큰 (⚠️ 캐시된 건 제외)</td>
+    <td>캐시 ON 이면 <strong>작아야</strong> 정상</td>
+    <td>⭐ 캐시를 켰는데 이 값이 크면 <strong>캐시가 안 듣는 것</strong></td>
+  </tr>
+  <tr>
+    <td><code>output_tokens</code></td>
+    <td>모델이 <strong>생성한</strong> 토큰</td>
+    <td>답변 길이만큼</td>
+    <td>비용의 큰 부분 (출력이 입력보다 단가가 높음). 급증하면 답변이 장황해진 것</td>
+  </tr>
+  <tr>
+    <td><code>cache_read_input_tokens</code></td>
+    <td>캐시에서 <strong>재사용한</strong> 토큰</td>
+    <td>2회차부터 커짐</td>
+    <td><strong>0 이면 캐시 미동작.</strong> TTL(5분) 만료 또는 프롬프트가 매번 바뀌는 것</td>
+  </tr>
+  <tr>
+    <td><code>Cache Hit Ratio</code></td>
+    <td><code>cache_read ÷ (input + read + write)</code></td>
+    <td><strong>20~40%</strong> (실측 29%)</td>
+    <td>⭐ <strong>평소 대비 급락</strong>이 신호입니다 — system prompt 에 시각·랜덤값 같은
+    <strong>가변 요소가 들어가 캐시가 깨진 것</strong>. 절대값이 낮은 건 정상 (Haiku 3개는 캐시 대상이 아님)</td>
+  </tr>
+  <tr>
+    <td><code>CPUUsed-vCPUHours</code><br><code>MemoryUsed-GBHours</code></td>
+    <td>컨테이너 자원 사용량 (누적)</td>
+    <td>워크샵 중엔 비어 있음</td>
+    <td><strong>최대 60분 지연</strong>됩니다. 실서비스에서는 <strong>OOM·throttle 의 조기 신호</strong>이자 청구 추정 근거</td>
+  </tr>
+</table>
+
+<div class="box say">
+  <span class="tag">🗣️ 지표를 묶어서 읽는 법 — 이게 진짜 운영입니다</span>
+  <p>"지표는 <strong>하나씩 보면 의미가 약하고, 묶어 보면 진단이 됩니다.</strong>"</p>
+  <table style="margin-top:8px">
+    <tr><th style="width:230px">조합</th><th>진단</th></tr>
+    <tr><td>Invocations ↑ · Latency 그대로</td><td>✅ 건강하게 확장되는 중</td></tr>
+    <tr><td>Invocations 그대로 · <strong>P99 만 ↑</strong></td><td>특정 질문 유형이 느림 → Observability 에서 그 trace 의 도구 호출 수를 봅니다</td></tr>
+    <tr><td><strong>SystemErrors ↑</strong> · Invocations 그대로</td><td>🛑 코드·권한 문제. 배포 직후면 <strong>롤백 판단</strong></td></tr>
+    <tr><td>Throttles ↑ · Invocations ↑</td><td>한도 도달. 요청을 줄이거나 quota 증설</td></tr>
+    <tr><td><strong>Cache Ratio ↓</strong> · input_tokens ↑</td><td>프롬프트가 가변화됨 → <strong>비용이 조용히 오릅니다</strong></td></tr>
+    <tr><td>Invocations ÷ Sessions ≈ 1</td><td>멀티턴 미사용 → Memory 설계를 재검토</td></tr>
+  </table>
+</div>
+
+<h3>⚠️ 참가자가 반드시 묻는 3가지 — 먼저 말해두세요</h3>
+<table>
+  <tr><th style="width:210px">질문</th><th>답</th></tr>
+  <tr>
+    <td><strong>"에러가 0 인데요?"</strong></td>
+    <td><strong>정상입니다.</strong> 잘못된 payload 도 컨테이너까지 와서 <code>app.py</code> 가
+    "메시지를 입력해주세요" 를 <strong>정상 응답(200)</strong> 으로 돌려줍니다. 버그가 아니라 <strong>의도된 방어 설계</strong>입니다.
+    대신 대가가 있습니다 — 입력 오류가 metric 에 안 보입니다. 추적하려면 custom metric 을 직접 올려야 합니다.
+    <span class="muted">이 trade-off 를 아는 것이 이 Lab 의 포인트입니다.</span></td>
+  </tr>
+  <tr>
+    <td><strong>"Latency 선이 끊겨요"</strong></td>
+    <td><strong>장애가 아닙니다.</strong> CloudWatch 는 <strong>데이터 없는 구간을 잇지 않습니다.</strong>
+    워크샵 트래픽이 연속적이지 않아 호출 없는 구간마다 빈칸이 생깁니다.
+    시간 범위를 넓히면(<code>3h</code>→<code>12h</code>) 메워지는 것을 즉석에서 보여주면 바로 납득합니다.</td>
+  </tr>
+  <tr>
+    <td><strong>"대시보드가 안 변해요"</strong></td>
+    <td>가장 흔한 원인은 지연이 아니라 <strong>시간 범위 설정</strong>입니다.
+    <span class="hl">우상단 시간 범위를 <code>3h</code> 로 바꾸고 Refresh</span> 를 먼저 시키세요.
+    지연은 ①②③ 1분 / ④⑤ 2~5분 / ⑥ <strong>최대 60분</strong> / ⑦ 수십 초.</td>
+  </tr>
+</table>
+
+<!-- ══════════ Lab 8 ══════════ -->
+<h2 id="lab8">Lab 8. Evaluations <span class="time">30분</span></h2>
+<div class="goal">목표: <strong>답변 품질을 점수로 만들고, 회귀를 자동으로 잡는다.</strong></div>
+
+<div class="box say">
+  <span class="tag">🗣️ 왜 필요한가 — 이 한 문장</span>
+  <p>"Lab 6·7 까지는 <strong>양적 신호</strong>만 봤습니다 — 호출 수, 지연, 토큰.
+  그런데 <strong>'답변이 좋아졌나 나빠졌나' 는 하나도 알 수 없습니다.</strong>"</p>
+  <p>"LLM 앱은 <strong>코드를 안 바꿔도 품질이 변합니다.</strong> 그래서 <strong>골든셋</strong> — 매번 똑같이 던지는 고정 질문 세트가 필요합니다."</p>
+</div>
+
+<h3>이건 CI/CD 안에서 도는 평가입니다</h3>
+<table>
+  <tr><th style="width:110px">유형</th><th>언제</th><th>이 워크샵</th></tr>
+  <tr><td><strong>On-demand</strong></td><td><strong>PR 게이트 · 골든셋 회귀</strong></td><td>✅ 실습 본체</td></tr>
+  <tr><td>Batch</td><td>배포 전후 비교, 정기 감사 (비동기·대규모)</td><td>명령만 소개</td></tr>
+  <tr><td>Online</td><td>운영 트래픽 지속 감시</td><td>개념·링크만</td></tr>
+</table>
+
+<div class="box say">
+  <span class="tag">🗣️ Online 이 골든셋에 못 쓰이는 이유 (좋은 질문이 나옵니다)</span>
+  <p>"<strong>운영 트래픽에는 정답이 없습니다.</strong> 공식 문서도 그 이유로 못 쓴다고 적고 있고,
+  API 에 <strong>정답을 넘길 필드 자체가 없습니다.</strong>"</p>
+  <p>"그래서 <strong>정답 있는 회귀 테스트 = On-demand, 정답 없는 운영 감시 = Online</strong> 으로 갈립니다.
+  실서비스는 둘 다 씁니다."</p>
+</div>
+
+<h3>진행 순서</h3>
+<pre><code># 1) 5턴 대화로 trace 만들기 (SESSION_ID 는 33자 이상)
+# 2) 인덱싱 대기 — 2~5분 (배포 직후 첫 trace 는 ~10분)
+agentcore run eval --session-id "${SESSION_ID}" \
+  --evaluator "Builtin.Helpfulness" \
+  --evaluator "Builtin.GoalSuccessRate"</code></pre>
+
+<div class="box stop">
+  <span class="tag">🛑 <code>Builtin.ToolSelectionAccuracy</code> 는 넣지 마세요</span>
+  <p>실환경에서 이 오류로 실패합니다:</p>
+  <pre><code>Error: The evaluation target contains spanIds that do not exist
+in the provided data. Missing spanIds: {'fa0b48931de2eb53', ...}</code></pre>
+  <p><strong>5분 더 기다려도 같은 spanId 가 그대로 나오므로 인덱싱 지연이 아닙니다.</strong>
+  도구 선택을 보려면 <code>expected_trajectory</code> 기반 <strong><code>Builtin.Trajectory*Match</code></strong> 를 쓰세요 —
+  프로그램적으로 채점하므로 이 문제가 없고 <strong>비용도 0</strong> 입니다.</p>
+</div>
+
+<h3 id="evalread">📊 평가 결과 읽는 법 — "이 점수가 무슨 뜻인가"</h3>
+
+<pre><code>aggregateScore : 0.932        ← 이 evaluator 의 전체 평균
+sessionScores[] : turn 별 결과
+  ├ traceId     : 이 turn 의 trace ID   ← ⭐ 답변 본문을 찾는 열쇠
+  ├ value       : 0~1 정규화 점수
+  ├ label       : 등급명
+  └ explanation : judge 가 그 점수를 준 이유
+tokenUsage      : judge LLM 이 쓴 토큰  ← 평가 자체의 비용</code></pre>
+
+<div class="box warn">
+  <span class="tag">⚠️ 먼저 짚을 것 — 점수만 보면 안 됩니다</span>
+  <p><strong><code>value</code> 보다 <code>explanation</code> 이 중요합니다.</strong>
+  점수는 "몇 점" 이고, explanation 은 <strong>"왜 그 점수인지"</strong> 입니다.
+  회귀를 고치려면 후자가 필요합니다.</p>
+</div>
+
+<h4 style="margin:20px 0 6px; font-size:15px">evaluator 별로 무엇을 재는가</h4>
+<table>
+  <tr><th style="width:190px">evaluator</th><th style="width:200px">재는 것</th><th>낮으면 무슨 뜻인가</th></tr>
+  <tr>
+    <td><code>Builtin.Helpfulness</code><br><span class="muted">judge LLM</span></td>
+    <td>답변이 <strong>사용자 목표 달성에 도움이 됐나</strong></td>
+    <td>질문에 정면으로 답하지 않았거나, 정보가 부족·장황함.
+    <span class="muted">등급: Above And Beyond / Very Helpful / Somewhat Helpful …</span></td>
+  </tr>
+  <tr>
+    <td><code>Builtin.GoalSuccessRate</code><br><span class="muted">judge LLM</span></td>
+    <td><strong>골든셋의 <code>assertions</code> 를 만족했나</strong> (정답 대조)</td>
+    <td>⭐ <strong>회귀 게이트의 핵심.</strong> 이게 떨어지면 "요구한 내용을 빠뜨렸다" 는 뜻.
+    <span class="muted">verdict: <code>Yes</code>/<code>No</code> 또는 <code>SUCCESS</code>/<code>FAILURE</code></span></td>
+  </tr>
+  <tr>
+    <td><code>Builtin.Correctness</code><br><span class="muted">judge LLM</span></td>
+    <td><code>expected_response</code> 와 <strong>사실이 일치하나</strong></td>
+    <td>KB 에서 잘못된 문서를 끌어왔거나 <strong>환각</strong></td>
+  </tr>
+  <tr>
+    <td><code>Builtin.Trajectory*Match</code><br><span class="muted">프로그램 · <strong>비용 0</strong></span></td>
+    <td><strong>도구를 올바른 순서로 불렀나</strong></td>
+    <td>Orchestrator 가 엉뚱한 도구를 골랐거나 순서가 틀림.
+    <span class="muted">프롬프트·도구 설명을 손볼 신호</span></td>
+  </tr>
+</table>
+
+<h4 style="margin:20px 0 6px; font-size:15px">점수 구간을 어떻게 해석하나</h4>
+<table>
+  <tr><th style="width:110px"><code>value</code></th><th style="width:150px">판단</th><th>진행자가 할 말</th></tr>
+  <tr><td class="n">1.0</td><td>✅ 만족</td><td>"요구한 내용을 다 담았습니다"</td></tr>
+  <tr><td class="n">0.8~0.99</td><td>✅ 통과 · <strong>흠집 있음</strong></td><td>⭐ <strong>explanation 을 읽어주세요.</strong> judge 가 구체적 결함을 지목했습니다 — 여기가 개선 포인트입니다</td></tr>
+  <tr><td class="n">0.5~0.79</td><td>⚠️ 경계</td><td>"통과했지만 반복되면 프롬프트를 손봐야 합니다"</td></tr>
+  <tr><td class="n">&lt; 0.5</td><td>🛑 <strong>게이트 실패</strong></td><td>"이건 회귀입니다. <code>traceId</code> 로 내려가 원인을 봅니다"</td></tr>
+</table>
+<p class="muted">게이트 기준은 <code>run-golden-eval.py</code> 의 <code>DEFAULT_GATE</code> 에 있습니다
+(Helpfulness ≥ 0.5, GoalSuccessRate = Yes). <code>value</code> 는 API 가 이미 0~1 로 정규화해 주므로 환산이 필요 없습니다.</p>
+
+<div class="box ok">
+  <span class="tag">✅ 실측 예시로 시연하세요 — 이게 가장 설득력 있습니다</span>
+  <p>실제 결과에서 <strong>5턴 중 한 턴이 0.83</strong> 이 나왔습니다. judge 의 explanation 을 보면:</p>
+  <p style="background:#fff;padding:10px 12px;border-radius:5px;border-left:3px solid var(--ok);font-size:14px">
+    <em>"The product ID <strong>WHOO-00101</strong> is actually the 천기단 화현 크림, not the 아이크림 as stated in the response header…"</em>
+  </p>
+  <p style="margin-top:10px">즉 <strong>judge 가 답변 헤더의 상품명 오류를 잡아냈습니다.</strong> 재고·가격·프로모션은 다 맞았지만
+  라벨이 틀려서 1.0 이 아니라 0.83 을 준 것입니다.</p>
+  <p><strong>이걸 보여주면 "LLM 이 채점한다" 는 말이 실감됩니다</strong> — 사람이 놓칠 수 있는 디테일을 찾아냈으니까요.</p>
+</div>
+
+<h4 style="margin:20px 0 6px; font-size:15px">점수가 낮을 때 보는 순서</h4>
+<ol>
+  <li><strong><code>explanation</code> 먼저</strong> — 대부분 여기서 원인이 드러납니다</li>
+  <li><strong><code>traceId</code> 로 실제 답변 확인</strong> — 콘솔 Observability 또는 <code>agentcore traces get</code></li>
+  <li><strong>같은 질문 재실행</strong> — 일관되게 낮으면 <strong>코드·프롬프트 문제</strong>, 들쭉날쭉하면 <strong>모델 변동성</strong></li>
+</ol>
+
+<div class="box warn">
+  <span class="tag">⚠️ 오탐을 회귀로 착각하지 않게</span>
+  <p><strong>LLM-as-Judge 는 같은 답변에도 점수가 조금씩 달라집니다.</strong>
+  1건 FAIL 로 release 를 막지 말고, <strong>같은 시나리오가 반복해서 떨어질 때</strong> 회귀로 판정하세요.</p>
+  <p>반대로 <code>Trajectory*Match</code> 는 <strong>프로그램 채점이라 결정적</strong>입니다 —
+  이게 FAIL 이면 <span class="hl">확실한 회귀</span>입니다. 게이트에서 더 신뢰할 수 있습니다.</p>
+</div>
+
+<h3>⚠️ 참가자가 반드시 묻는 2가지</h3>
+<table>
+  <tr><th style="width:230px">질문</th><th>답</th></tr>
+  <tr>
+    <td><strong>"AI 답변 본문은 어디서 봐요?"</strong></td>
+    <td><strong>평가 결과 JSON 에는 없습니다</strong> — judge 채점만 담깁니다.
+    <code>traceId</code> 가 열쇠입니다 (<code>sessionId</code> 는 턴마다 같고 <code>traceId</code> 가 다름).<br>
+    <strong>시연은 콘솔로</strong> — GenAI Observability → Sessions → 그 trace →
+    <code>invoke_agent</code> span → 우측 <strong>Input / Output</strong>.
+    <span class="muted">"점수 0.83" 에서 실제 문장까지 내려가는 흐름이 설득력 있습니다.</span></td>
+  </tr>
+  <tr>
+    <td><strong>"explanation 이 영어네요?"</strong></td>
+    <td><code>Builtin.*</code> 의 판정 프롬프트가 <strong>영어 고정</strong>입니다.
+    <strong>점수는 한국어를 정확히 이해하고 산출됩니다</strong> — 실측에서 judge 가
+    <code>WHOO-00101</code> 을 아이크림으로 잘못 라벨한 것을 잡아내 1.0 대신 <strong>0.83</strong> 을 줬습니다.<br>
+    한국어 설명이 필요하면 <code>agentcore add evaluator --instructions</code> 로 custom evaluator 를 만듭니다.
+    <span class="muted">단 점수 체계가 달라져 과거 비교가 안 되므로, 회귀 게이트는 built-in 유지 + 보고용만 별도로.</span></td>
+  </tr>
+</table>
+
+<div class="box say">
+  <span class="tag">🗣️ 골든셋 작성 원칙 — 실무에서 가장 유용한 부분</span>
+  <p>"<strong>키워드 일치가 아니라 의미로 씁니다.</strong> '장뇌삼이 포함되어야 한다' 가 아니라
+  '<strong>최소 두 가지를</strong> 언급해야 한다'. 답변 문구는 매번 달라지니 judge 가 판단할 여지를 남깁니다."</p>
+  <p>"<strong>실제 데이터에서 정답을 가져와야 합니다.</strong> 지어낸 정답으로 채점하면
+  회귀 테스트가 아니라 <strong>오답 고정</strong>입니다."</p>
+</div>
+
+<!-- ══════════ 함정 ══════════ -->
+<h2 id="trap">함정 요약 — 한 장으로</h2>
+<div class="goal">실환경에서 <strong>실제로 발생한</strong> 것만 모았습니다. 이 표만 손에 들고 있어도 대응됩니다.</div>
+
+<table>
+  <tr><th style="width:60px">Lab</th><th>증상</th><th>원인 / 조치</th></tr>
+  <tr><td class="n">5</td><td><code>CDK bootstrap failed:<br>...does not hold a stack</code></td><td>새 계정에 bootstrap 없음. <strong>0단계를 먼저</strong>. 실패 흔적이 남았으면 <code>CDKToolkit</code> 삭제 후 재실행</td></tr>
+  <tr><td class="n">5</td><td><code>npx cdk</code> 가 출력 없이 끝남</td><td><strong><code>./node_modules/.bin/cdk</code></strong> 를 직접 쓰게 하세요</td></tr>
+  <tr><td class="n">5</td><td><code>Failed to create venv</code><br><code>CDK synth failed</code></td><td><strong>원인이 같습니다</strong> — <code>codeLocation</code> 이 없는 경로. 🚦 관문으로 사전 차단</td></tr>
+  <tr><td class="n">5</td><td>첫 invoke 가 <strong>500</strong></td><td><code>executionRoleArn</code> 누락 → CDK 자동 role 은 <strong>모델 호출 권한만</strong> 있음. <code>set-agentcore-config.py</code> 가 자동 처리</td></tr>
+  <tr><td class="n">5</td><td>UI 가 <code>ECONNREFUSED 0.0.0.0:8081</code></td><td>Streamlit 과 다릅니다 — <code>127.0.0.1</code> 바인드 + Host allowlist. <strong>UI 는 선택으로</strong></td></tr>
+  <tr><td class="n">5</td><td>invoke 가 항상 "메시지를 입력해주세요"</td><td>payload 키 불일치 (CLI <code>prompt</code> / boto3 <code>message</code>). 저장소 코드는 둘 다 받음</td></tr>
+  <tr><td class="n">6</td><td><code>agentcore logs</code> 가 멈춤</td><td>스트리밍 모드. <strong><code>--since 1h</code></strong> 를 붙이면 검색 모드</td></tr>
+  <tr><td class="n">7</td><td>위젯이 빔 / Latency 선이 끊김</td><td><strong>시간 범위를 <code>3h</code> 로</strong>. 끊김은 "그때 호출이 없었다" 는 뜻이지 장애가 아님</td></tr>
+  <tr><td class="n">7</td><td>에러 metric 이 0</td><td><strong>정상</strong> — <code>app.py</code> 가 200 으로 안내 문구를 돌려줌</td></tr>
+  <tr><td class="n">8</td><td><code>Missing spanIds</code></td><td><code>ToolSelectionAccuracy</code> 를 빼세요. <code>Trajectory*Match</code> 로 대체</td></tr>
+  <tr><td class="n">8</td><td><code>No spans found for session</code></td><td>세션 ID 가 <strong>33자 미만</strong>이면 invoke 자체가 거부됩니다. UUID 를 붙이세요</td></tr>
+  <tr><td class="n">공통</td><td><code>NodeVersionSupportWarning</code></td><td><strong>무시</strong>. 2027년 이후 SDK 안내일 뿐</td></tr>
+</table>
+
+<div class="box warn">
+  <span class="tag">⚠️ 여러 명이 동시에 막히면</span>
+  <p><code>CDKToolkit</code> 복구는 <strong>10분+</strong> 걸립니다.
+  여러 참가자가 같이 겪으면 <strong>Workshop Studio 계정을 새로 발급</strong>하는 편이 빠릅니다.</p>
+  <p>애초에 <strong>0단계 + 🚦 관문</strong>을 지키게 하면 이 상황 자체가 생기지 않습니다.</p>
+</div>
+
+<!-- ══════════ 마무리 ══════════ -->
+<h2 id="close">마무리 <span class="time">15분</span></h2>
+
+<div class="box say">
+  <span class="tag">🗣️ 오늘 한 것을 한 문장으로</span>
+  <p>"어제는 <strong>에이전트를 만들었고</strong>, 오늘은 그걸 <strong>서비스로 만들었습니다</strong> —
+  누구나 부를 수 있고, 안에서 무슨 일이 있었는지 보이고, 품질이 나빠지면 자동으로 잡힙니다."</p>
+</div>
+
+<h3>실서비스로 갈 때 짚어줄 5가지</h3>
+<ol>
+  <li><strong>IAM 최소권한</strong> — 워크샵 role 은 넓습니다(<code>bedrock-agentcore:*</code>). 리소스 ARN 별로 제한하세요</li>
+  <li><strong>골든셋을 팀 자산으로</strong> — git 에 두고 코드와 함께 리뷰. 장애가 날 때마다 시나리오를 추가하세요</li>
+  <li><strong>PR 게이트 연결</strong> — 오늘 손으로 돌린 평가가 CI 에서 그대로 돕니다</li>
+  <li><strong>Online evaluation 추가</strong> — 운영 트래픽 지속 감시. 골든셋(회귀)과 역할이 다릅니다</li>
+  <li><strong>비용 모니터링</strong> — Lab 7 의 토큰 위젯이 출발점입니다</li>
+</ol>
+
+<div class="box ok">
+  <span class="tag">✅ 완료 판정</span>
+  <p>참가자가 이 4개를 보여줄 수 있으면 Day 2 성공입니다.</p>
+  <ol>
+    <li><code>agentcore status</code> → <code>Runtime: READY</code></li>
+    <li><code>agentcore invoke</code> → 한국어 답변</li>
+    <li>GenAI Observability 에서 <strong>span 트리</strong></li>
+    <li>평가 결과에 <strong>score · label · explanation</strong></li>
+  </ol>
+</div>
+
+<p class="muted" style="margin-top:34px; padding-top:14px; border-top:1px solid var(--line)">
+  이 문서는 <strong>진행자용</strong>입니다 · 상세 내용은 각 Lab 문서와
+  <code>진행자-대본-day2.md</code> 참고 · 근거 자료는 <code>day2-부록-근거자료.md</code><br>
+  명령과 출력은 실제 AWS 계정에서 완주 검증한 값입니다.
+</p>
+
+</div>
+</body>
+</html>
