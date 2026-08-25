@@ -212,7 +212,7 @@ echo "KB=$KB_ID  MEM=$AGENTCORE_MEMORY_ID  GW=$AGENTCORE_GATEWAY_URL"</code></pr
 <table>
   <tr><th style="width:52px">단계</th><th>명령</th><th>확인할 것</th></tr>
   <tr><td class="n">1·2</td><td><code>npm install -g @aws/agentcore</code> → <code>agentcore create</code> → <code>set-agentcore-config.py</code></td><td>출력 <strong>5줄 전부</strong></td></tr>
-  <tr><td class="n">2.5</td><td><code>cd agentcore/cdk</code> → <code>./node_modules/.bin/cdk bootstrap aws://$ACC/us-east-1</code></td><td><code>✅ ... bootstrapped</code></td></tr>
+  <tr><td class="n">2.5</td><td><code>cd agentcore/cdk</code> → <code>node node_modules/aws-cdk/bin/cdk bootstrap …</code></td><td><code>✅ ... bootstrapped</code></td></tr>
   <tr><td class="n">🚦</td><td><code>./scripts/check-agentcore-config.sh</code></td><td><code>✓ 사전점검 통과</code></td></tr>
   <tr><td class="n">4</td><td><code>agentcore deploy -y</code></td><td><code>Runtime: READY</code></td></tr>
   <tr><td class="n">5</td><td><code>agentcore invoke "천기단 화현 크림 성분 알려줘"</code></td><td>한국어 답변</td></tr>
@@ -225,10 +225,11 @@ echo "KB=$KB_ID  MEM=$AGENTCORE_MEMORY_ID  GW=$AGENTCORE_GATEWAY_URL"</code></pr
   <code>CDKToolkit</code> 스택을 못 쓰는 상태로 남겨 <strong>이후 모든 배포를 막습니다.</strong> 복구는 10분+ 입니다.</p>
   <pre><code>cd ~/thewhoo-agentcore-workshop/agentcore/cdk
 ACC=$(aws sts get-caller-identity --query Account --output text)
-./node_modules/.bin/cdk bootstrap aws://$ACC/us-east-1</code></pre>
-  <p>⚠️ <strong><code>npx cdk</code> 로 안내하지 마세요.</strong> Code Editor 에서
-  <span class="hl">출력 없이 조용히 종료</span>되어 참가자가 "됐다" 고 착각합니다.
-  <code>./node_modules/.bin/cdk</code> 를 직접 쓰게 하세요.</p>
+node node_modules/aws-cdk/bin/cdk bootstrap aws://$ACC/us-east-1</code></pre>
+  <p>⚠️ <strong>경로를 바꿔 안내하지 마세요.</strong> 둘 다 실패합니다 (실측):
+  <code>npx cdk</code> → <span class="hl">출력 없이 조용히 종료</span> (참가자가 "됐다" 고 착각) ·
+  <code>./node_modules/.bin/cdk</code> → <code>Cannot find module …/dist/bin/cdk.js</code>.
+  <strong><code>node node_modules/aws-cdk/bin/cdk</code></strong> 만 쓰게 하세요.</p>
 </div>
 
 <div class="box stop">
@@ -627,7 +628,7 @@ tokenUsage      : judge LLM 이 쓴 토큰  ← 평가 자체의 비용</code></
 <table>
   <tr><th style="width:60px">Lab</th><th>증상</th><th>원인 / 조치</th></tr>
   <tr><td class="n">5</td><td><code>CDK bootstrap failed:<br>...does not hold a stack</code></td><td>새 계정에 bootstrap 없음. <strong>2.5단계를 먼저</strong>. 실패 흔적이 남았으면 <code>CDKToolkit</code> 삭제 후 재실행</td></tr>
-  <tr><td class="n">5</td><td><code>npx cdk</code> 가 출력 없이 끝남</td><td><strong><code>./node_modules/.bin/cdk</code></strong> 를 직접 쓰게 하세요</td></tr>
+  <tr><td class="n">5</td><td><code>npx cdk</code> 가 출력 없이 끝남 · <code>.bin/cdk</code> 가 <code>Cannot find module …/dist/bin/cdk.js</code></td><td><strong><code>node node_modules/aws-cdk/bin/cdk</code></strong> 를 쓰세요 (aws-cdk 패키지 직접 지정)</td></tr>
   <tr><td class="n">5</td><td><code>Failed to create venv</code><br><code>CDK synth failed</code></td><td><strong>원인이 같습니다</strong> — <code>codeLocation</code> 이 없는 경로. 🚦 관문으로 사전 차단</td></tr>
   <tr><td class="n">5</td><td>첫 invoke 가 <strong>500</strong></td><td><code>executionRoleArn</code> 누락 → CDK 자동 role 은 <strong>모델 호출 권한만</strong> 있음. <code>set-agentcore-config.py</code> 가 자동 처리</td></tr>
   <tr><td class="n">5</td><td>UI 가 <code>ECONNREFUSED 0.0.0.0:8081</code></td><td>Streamlit 과 다릅니다 — <code>127.0.0.1</code> 바인드 + Host allowlist. <strong>UI 는 선택으로</strong></td></tr>
