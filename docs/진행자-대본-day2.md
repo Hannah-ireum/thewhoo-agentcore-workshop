@@ -175,36 +175,39 @@ agentcore deploy -y
 agentcore status
 ```
 
-### 🚨 진행자가 먼저 말해둘 것 — `agentcore dev` 와 `localhost` 함정
+### ⏭️ 진행자 판단 — `agentcore dev`(3단계)는 **건너뛰는 것을 기본으로**
 
-Code Editor 에서 `agentcore dev` 는 **반드시** 이 오류로 끝납니다 (원격 컨테이너에 브라우저 없음):
+Code Editor 에서 이 단계는 환경 제약이 많아 **참가자가 가장 많이 시간을 잃습니다.** 실환경에서 확인된 오류가 두 가지입니다:
 
 ```
-Chat UI: http://localhost:8081
-Error: spawn xdg-open ENOENT
+Error: spawn xdg-open ENOENT              ← 브라우저가 없음
+❌ Failed to create venv: unknown error   ← src/ 안 venv 생성 실패
+```
+
+**Lab 5 의 목표는 4단계 배포입니다.** 3단계는 예비 확인이고, 배포된 Runtime 은 `src/.venv` 를 쓰지 않습니다(컨테이너가 `pyproject.toml` 로 새로 설치). **즉 이 오류는 배포와 무관합니다.**
+
+> **진행 방침** — 시간이 넉넉하지 않으면 3단계를 **설명만 하고 넘어가세요.** "로컬에서 먼저 돌려볼 수 있다" 는 개념만 전달하고 바로 `agentcore deploy` 로 갑니다.
+
+**그래도 해보겠다는 참가자에게:**
+
+```bash
+# 오류가 나면 원인을 직접 확인
+cd ~/thewhoo-agentcore-workshop/src && uv venv
+#   No interpreter found  → git pull (requires-python 이 3.11 로 수정됨)
+#   ENOSPC                → df -h /home/sagemaker-user
+#   uv: not found         → curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 성공했으면
+rm -rf ~/thewhoo-agentcore-workshop/src/.venv
+cd ~/thewhoo-agentcore-workshop && agentcore dev --logs
 ```
 
 **참가자가 하는 두 가지 실수를 미리 막아주세요:**
 
-1. **`Ctrl+C` 로 끈다** — 서버는 떠 있는데 끄면 죽습니다
-2. **`http://localhost:8081` 을 자기 브라우저에 넣는다** — 그 `localhost` 는 **Code Editor 컨테이너 안**입니다. 참가자 노트북 브라우저에서는 자기 PC 를 찾으니 안 열립니다
+1. **`Ctrl+C` 로 끈다** — `xdg-open` 오류가 나도 서버는 떠 있습니다
+2. **`http://localhost:8081` 을 자기 브라우저에 넣는다** — 그 `localhost` 는 Code Editor 컨테이너 안입니다
 
-**처음부터 이렇게 안내하세요 (터미널 2개, 웹 UI 없이):**
-
-```bash
-# 터미널 ① — 서버
-agentcore dev --logs
-#   → "Application startup complete." 확인 후 이 창은 그대로
-
-# 터미널 ② — Terminal → New Terminal
-agentcore dev "천기단 화현 크림 성분 알려줘"
-```
-
-**확인할 것은 두 개뿐**이라고 못 박아 주세요: ① 서버 기동 문구 ② 답변 수신.
-
-> `--no-browser` 는 `requires an interactive terminal` 로 실패합니다 — 쓰지 마세요.
->
-> **웹 inspector 를 시연하려면** PORTS 탭 → Forward a Port → `8081` → 지구본 아이콘. Code Editor 를 띄운 그 브라우저에서만 열립니다(외부 403). 시간 없으면 건너뛰세요 — Lab 6·7 의 CloudWatch Observability 가 훨씬 자세합니다.
+> **웹 UI 를 보려면 Day 1 Streamlit 과 똑같습니다** — PORTS 탭 → Forward a Port → `8081` → 지구본 아이콘. Day 1 에서 `8501` 로 Streamlit 을 보셨다면 **포트 번호만 다릅니다.** 이 비유를 쓰면 참가자가 바로 이해합니다.
 
 ### 🚨 `CDK synth failed` 가 나오면 — 원인이 여러 가지입니다
 
