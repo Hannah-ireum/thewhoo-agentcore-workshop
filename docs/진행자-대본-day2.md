@@ -227,10 +227,10 @@ agentcore dev "천기단 화현 크림 성분 알려줘"
 ```bash
 cd ~/thewhoo-agentcore-workshop/agentcore/cdk
 ACC=$(aws sts get-caller-identity --query Account --output text)
-./node_modules/.bin/cdk bootstrap aws://$ACC/us-east-1
+node node_modules/aws-cdk/bin/cdk bootstrap aws://$ACC/us-east-1
 ```
 
-> ⚠️ **`npx cdk` 로 안내하지 마세요.** Code Editor 에서 출력 없이 조용히 종료되어 참가자가 "됐다" 고 착각합니다 (실측). `./node_modules/.bin/cdk` 를 직접 쓰게 하세요.
+> ⚠️ **경로를 바꿔 안내하지 마세요.** `npx cdk` 는 출력 없이 조용히 종료되어 참가자가 "됐다" 고 착각하고, `./node_modules/.bin/cdk` 는 `Cannot find module .../dist/bin/cdk.js` 로 실패합니다 (둘 다 실측). **`node node_modules/aws-cdk/bin/cdk`** 만 쓰게 하세요.
 
 이미 깨진 참가자는 Lab 5 문서의 **"4단계 전에 — 배포가 실패할 때"** 절로 안내하세요. 여러 명이 동시에 겪으면 **계정 재발급**이 빠릅니다. 🚦 관문(`check-agentcore-config.sh`)이 bootstrap 상태까지 검사하므로, **관문을 지키게 하면 이 상황 자체가 생기지 않습니다.**
 
