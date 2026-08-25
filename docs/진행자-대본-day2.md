@@ -175,66 +175,52 @@ agentcore deploy -y
 agentcore status
 ```
 
-### ⏭️ 진행자 판단 — `agentcore dev`(3단계)는 **건너뛰는 것을 기본으로**
+### 🚦 진행자가 **반드시** 시킬 것 — 2단계 완료 확인
 
-Code Editor 에서 이 단계는 환경 제약이 많아 **참가자가 가장 많이 시간을 잃습니다.** 실환경에서 확인된 오류가 두 가지입니다:
-
-```
-Error: spawn xdg-open ENOENT              ← 브라우저가 없음
-❌ Failed to create venv: unknown error   ← src/ 안 venv 생성 실패
-```
-
-**Lab 5 의 목표는 4단계 배포입니다.** 3단계는 예비 확인이고, 배포된 Runtime 은 `src/.venv` 를 쓰지 않습니다(컨테이너가 `pyproject.toml` 로 새로 설치). **즉 이 오류는 배포와 무관합니다.**
-
-> **진행 방침** — 시간이 넉넉하지 않으면 3단계를 **설명만 하고 넘어가세요.** "로컬에서 먼저 돌려볼 수 있다" 는 개념만 전달하고 바로 `agentcore deploy` 로 갑니다.
-
-**그래도 해보겠다는 참가자에게:**
+Lab 5 에서 참가자가 겪는 사고의 **대부분이 이 한 가지**에서 나옵니다. 3·4단계로 넘기기 전에 전원에게 이걸 실행시키세요:
 
 ```bash
-# 오류가 나면 원인을 직접 확인
-cd ~/thewhoo-agentcore-workshop/src && uv venv
-#   No interpreter found  → git pull (requires-python 이 3.11 로 수정됨)
-#   ENOSPC                → df -h /home/sagemaker-user
-#   uv: not found         → curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 성공했으면
-rm -rf ~/thewhoo-agentcore-workshop/src/.venv
-cd ~/thewhoo-agentcore-workshop && agentcore dev --logs
+cd ~/thewhoo-agentcore-workshop
+./scripts/check-agentcore-config.sh
 ```
 
-**참가자가 하는 두 가지 실수를 미리 막아주세요:**
+`✓ 사전점검 통과` 가 나온 사람만 다음으로 보냅니다.
 
-1. **`Ctrl+C` 로 끈다** — `xdg-open` 오류가 나도 서버는 떠 있습니다
-2. **`http://localhost:8081` 을 자기 브라우저에 넣는다** — 그 `localhost` 는 Code Editor 컨테이너 안입니다
+**왜 중요한가** — `agentcore create` 는 `codeLocation` 을 자기 스캐폴딩(`app/<이름>/`)으로 둡니다. `set-agentcore-config.py` 를 건너뛰면 CLI 가 **없는 디렉터리**를 대상으로 동작하는데, 오류가 원인을 전혀 알려주지 않습니다 (실환경 확인):
 
-> **웹 UI 를 보려면 Day 1 Streamlit 과 똑같습니다** — PORTS 탭 → Forward a Port → `8081` → 지구본 아이콘. Day 1 에서 `8501` 로 Streamlit 을 보셨다면 **포트 번호만 다릅니다.** 이 비유를 쓰면 참가자가 바로 이해합니다.
+| 명령 | 나오는 오류 | 진짜 원인 |
+|---|---|---|
+| `agentcore dev` | `❌ Failed to create venv: unknown error` | 없는 경로에서 `uv venv` |
+| `agentcore deploy` | `CDK synth failed` | 없는 경로 패키징 |
 
-### 🚨 `CDK synth failed` 가 나오면 — 원인이 여러 가지입니다
+**두 오류의 원인이 같습니다.** 메시지만 보면 venv·CDK 문제로 보여 엉뚱한 곳을 파게 되고, **실패한 배포가 `CDKToolkit` 스택을 `ROLLBACK_FAILED` 로 만들면 복구에 10분 이상** 걸립니다. 관문 하나로 이 연쇄를 막습니다.
 
-```
-CDK synth failed: node dist/bin/cdk.js: Subprocess exited with error 1
-```
+### ⏭️ `agentcore dev`(3단계)는 건너뛰어도 됩니다
 
-**`NodeVersionSupportWarning` 은 원인이 아닙니다.** 2027년 이후 SDK 안내일 뿐이고, `aws-cdk` 는 node>=18, `aws-cdk-lib` 는 node>=20 이라 Code Editor 의 Node 20 으로 충분합니다(npm registry 확인). 참가자가 이 경고를 원인으로 오해하기 쉬우니 먼저 짚어주세요.
+관문을 통과했다면 3단계는 정상 동작합니다. 다만 **시간이 빠듯하면 설명만 하고 4단계로 가세요** — Lab 5 의 목표는 배포이고, 배포된 Runtime 은 `src/.venv` 를 쓰지 않습니다.
 
-**진단 순서 — 상세 오류를 먼저 확보시키세요:**
+**하는 경우 — 터미널 2개로 안내:**
 
 ```bash
-cd ~/thewhoo-agentcore-workshop/agentcore/cdk
-node dist/bin/cdk.js synth 2>&1 | tail -30
+# 터미널 ① 서버
+agentcore dev --logs      # "Application startup complete." 확인, 창은 그대로
+# 터미널 ② 호출 (Terminal → New Terminal)
+agentcore dev "천기단 화현 크림 성분 알려줘"
 ```
 
-여기서 나오는 메시지로 갈립니다 — `ENOSPC`(디스크), `Cannot find module`(의존성), `no credentials`/`ExpiredToken`(자격증명), `not authorized`(IAM), `cdk-bootstrap ... not found`(bootstrap). Lab 5 문서의 표에 원인별 조치가 있습니다.
+**참가자가 하는 세 가지 실수를 미리 막아주세요:**
 
-> **시간이 없으면 재생성이 가장 확실합니다** (`src/` 는 안 건드립니다):
-> ```bash
-> cd ~/thewhoo-agentcore-workshop && rm -rf agentcore
-> agentcore create --name ThewhooChat --framework Strands --protocol HTTP \
->   --model-provider Bedrock --memory none --build CodeZip
-> mv ThewhooChat/agentcore ./ && rm -rf ThewhooChat
-> eval "$(./scripts/print-env.sh w001)" && python3 scripts/set-agentcore-config.py
-> agentcore deploy --dry-run -y
-> ```
+1. **`xdg-open ENOENT` 를 보고 `Ctrl+C` 로 끈다** — 서버는 떠 있습니다
+2. **`http://localhost:8081` 을 자기 브라우저에 넣는다** — 그 `localhost` 는 Code Editor 컨테이너 안입니다. **Day 1 Streamlit 처럼 PORTS 포워딩** 이 필요합니다 (`8501` → `8081` 만 다름). 이 비유를 쓰면 바로 이해합니다
+3. **루트에서 `rm -rf .venv` 를 한다** — 워크샵 venv 가 지워집니다. 반드시 `src` 안인지 `pwd` 로 확인시키세요
+
+> `--no-browser` 는 쓰지 마세요 — Code Editor 에서 `requires an interactive terminal` 로 실패합니다.
+
+### 🚨 `CDK bootstrap failed` 가 나오면
+
+앞선 실패로 `CDKToolkit` 스택이 깨진 것입니다. Lab 5 문서의 **"4단계 전에 — 배포가 실패할 때"** 절에 복구 절차가 있습니다 (ECR·S3·SSM 정리 → 스택 삭제 → `npx cdk bootstrap`).
+
+> **복구는 10분+ 걸립니다.** 여러 참가자가 동시에 겪으면 **Workshop Studio 계정을 새로 발급**하는 편이 빠릅니다. 🚦 관문을 지키면 이 상황이 생기지 않습니다.
 
 ### ⚠️ 진행자가 미리 알려줄 것 — `pyproject.toml`
 
