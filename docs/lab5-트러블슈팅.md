@@ -110,6 +110,91 @@ eval "$(./scripts/print-env.sh w001)"
 > **진행자용** — 이 복구는 시간이 많이 듭니다(10분+). 워크샵 중 여러 참가자가 동시에 겪으면 **Workshop Studio 계정을 새로 발급**하는 편이 빠릅니다. 애초에 🚦 관문을 지키게 하면 이 상황 자체가 생기지 않습니다.
 
 
+## npm 전역 설치가 안 될 때
+
+`EACCES: permission denied` 또는 `agentcore: command not found` — npm 전역 경로가 root 소유(`/usr/lib`, `/usr/local`)라서 그렇습니다. **Pre-Lab 의 `setup-python.sh` 가 `~/.npm-global` 로 바꿔 두므로 보통은 발생하지 않습니다.**
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+export PATH="$HOME/.npm-global/bin:$PATH"
+
+npm install -g @aws/agentcore
+agentcore --version
+```
+
+> **`sudo npm install -g` 는 쓰지 마세요.** root 소유 파일이 생겨 이후 `agentcore update` 나 재설치가 또 막힙니다.
+
+진단:
+
+```bash
+npm config get prefix                  # 홈(~) 아래여야 정상
+which -a agentcore                     # 비어 있으면 PATH 문제
+npm ls -g --depth=0 | grep agentcore   # 설치 여부
+```
+
+## 첫 invoke 가 500 — `executionRoleArn` 누락
+
+`executionRoleArn` 을 비우면 CDK 가 role 을 자동 생성하는데, **그 role 의 권한이 이것뿐입니다** (실측):
+
+```
+bedrock:InvokeModel / InvokeModelWithResponseStream / CountTokens
+bedrock-agentcore:*ConfigurationBundle*   ← Memory 아님, 설정 번들 전용
+logs:* / xray:Put*
+```
+
+즉 **모델 호출만 됩니다.** 배포는 성공하고 컨테이너도 뜨지만 첫 invoke 에서 죽습니다:
+
+```
+Error: Received error (500) from runtime. Please check your CloudWatch logs.
+
+# CloudWatch 로그의 실제 원인
+botocore.errorfactory.AccessDeniedException: An error occurred
+(AccessDeniedException) when calling the CreateEvent operation
+```
+
+**해결** — `python3 scripts/set-agentcore-config.py` 가 워크샵 role 을 자동으로 넣습니다. 다른 role 을 쓰려면 실행 전에:
+
+```bash
+export AGENT_ROLE_ARN=arn:aws:iam::<account>:role/<role>
+```
+
+## `src/pyproject.toml` 이 없을 때
+
+```
+AgentCore CDK synthesis failed: Required project file not found: .../src/pyproject.toml
+```
+
+새 CLI 는 `requirements.txt` 를 읽지 않습니다. 저장소에는 포함돼 있으니 `git pull` 로 받으세요. 직접 만들 경우:
+
+```toml
+[project]
+name = "thewhoo-chat"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "aws-opentelemetry-distro",
+    "opentelemetry-exporter-otlp-proto-http",
+    "bedrock-agentcore>=1.9.1,<2.0",
+    "botocore[crt]>=1.43.0,<2.0",
+    "mcp>=1.27.0,<2.0",
+    "strands-agents>=1.39.0,<2.0",
+    "strands-agents-tools>=0.5.2,<1.0",
+    "requests-aws4auth>=1.3.0,<2.0",
+    "python-dotenv>=1.0.0,<2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+```
+
+> `botocore` 는 **1.43.0 이상**이어야 합니다 — 그 미만에는 `bedrock-agentcore` 서비스 정의가 없어 `UnknownServiceError` 가 납니다 (실측).
+
 ## 증상별 빠른 조회
 
 
