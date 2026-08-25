@@ -174,7 +174,8 @@ case "${BS}" in
     hint ""
     hint "해결 — 0단계를 먼저 실행하세요 (계정당 1회, 2~3분):"
     hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
-    hint "  (cd agentcore/cdk && npx cdk bootstrap aws://\$ACC/${REGION} --require-approval never)"
+    hint "  (cd agentcore/cdk && ./node_modules/.bin/cdk bootstrap aws://\$ACC/${REGION})"
+    hint "  ※ npx cdk 는 출력 없이 조용히 실패합니다 — .bin/cdk 를 직접 쓰세요"
     ;;
   ROLLBACK_COMPLETE|ROLLBACK_FAILED|DELETE_FAILED|*ROLLBACK_FAILED|CREATE_FAILED)
     bad "CDKToolkit 스택이 '${BS}' 로 고착됐습니다 (배포 불가 상태)"
@@ -183,7 +184,8 @@ case "${BS}" in
     hint "  aws cloudformation delete-stack --stack-name CDKToolkit --region ${REGION}"
     hint "  aws cloudformation wait stack-delete-complete --stack-name CDKToolkit --region ${REGION}"
     hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
-    hint "  (cd agentcore/cdk && npx cdk bootstrap aws://\$ACC/${REGION} --require-approval never)"
+    hint "  (cd agentcore/cdk && ./node_modules/.bin/cdk bootstrap aws://\$ACC/${REGION})"
+    hint "  ※ npx cdk 는 출력 없이 조용히 실패합니다 — .bin/cdk 를 직접 쓰세요"
     hint ""
     hint "삭제가 권한 부족으로 실패하면 (ecr:DeleteRepository / DeleteParameter),"
     hint "CloudShell 에서 ./scripts/grant-sagemaker-permissions.sh 를 실행하세요."
