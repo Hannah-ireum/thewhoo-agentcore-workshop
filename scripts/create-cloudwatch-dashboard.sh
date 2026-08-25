@@ -100,9 +100,9 @@ BODY=$(cat <<JSON
       "type": "metric",
       "x": 12, "y": 2, "width": 12, "height": 6,
       "properties": {
-        "title": "Latency P50 / P95 / P99 (ms)",
+        "title": "Latency P50 / P95 / P99 (ms) — 선이 끊긴 구간은 그 5분에 호출이 없었다는 뜻",
         "region": "${REGION}",
-        "period": 60,
+        "period": 300,
         "view": "timeSeries",
         "metrics": [
           [ "AWS/Bedrock-AgentCore", "Latency", "Resource", "${RUNTIME_ARN}", "Operation", "InvokeAgentRuntime", "Name", "${RUNTIME_NAME_DIM}", { "stat": "p50", "label": "P50" } ],
