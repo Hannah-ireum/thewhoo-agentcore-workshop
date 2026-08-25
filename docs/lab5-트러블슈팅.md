@@ -105,7 +105,7 @@ eval "$(./scripts/print-env.sh w001)"
 ./scripts/check-agentcore-config.sh && agentcore deploy -y
 ```
 
-> `npx cdk` 가 아니라 **`./node_modules/.bin/cdk`** 입니다 — [Lab 5 의 0단계](06-lab5-서비스로-배포하기.md#0단계-cdk-bootstrap-계정당-1회)의 주의를 참고하세요.
+> `npx cdk` 가 아니라 **`./node_modules/.bin/cdk`** 입니다 — [Lab 5 의 2.5단계](06-lab5-서비스로-배포하기.md#25단계-cdk-bootstrap-계정당-1회)의 주의를 참고하세요.
 
 > **진행자용** — 이 복구는 시간이 많이 듭니다(10분+). 워크샵 중 여러 참가자가 동시에 겪으면 **Workshop Studio 계정을 새로 발급**하는 편이 빠릅니다. 애초에 🚦 관문을 지키게 하면 이 상황 자체가 생기지 않습니다.
 

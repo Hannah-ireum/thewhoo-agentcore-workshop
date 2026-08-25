@@ -172,7 +172,7 @@ case "${BS}" in
     hint "  CDK bootstrap failed: CloudFormationStack object does not hold a stack"
     hint "게다가 실패 흔적이 ROLLBACK_COMPLETE 로 남아 이후 배포까지 막습니다."
     hint ""
-    hint "해결 — 0단계를 먼저 실행하세요 (계정당 1회, 2~3분):"
+    hint "해결 — 2.5단계를 실행하세요 (계정당 1회, 2~3분):"
     hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
     hint "  (cd agentcore/cdk && ./node_modules/.bin/cdk bootstrap aws://\$ACC/${REGION})"
     hint "  ※ npx cdk 는 출력 없이 조용히 실패합니다 — .bin/cdk 를 직접 쓰세요"
