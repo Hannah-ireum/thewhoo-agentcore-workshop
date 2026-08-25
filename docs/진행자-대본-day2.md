@@ -37,7 +37,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 > **`sudo npm install -g` 를 절대 쓰지 말라고 미리 말해두세요.** root 소유 파일이 생기면 이후 재설치·업데이트가 전부 막혀서 복구가 더 번거롭습니다.
 
-Code Editor 에는 Node.js 가 기본 포함돼 있습니다 (검증 시 v20.19.6 / npm 11.18.0). 🚨 **`cdk bootstrap` 은 참가자가 직접, `deploy` 보다 먼저 해야 합니다** — 자동 처리에 맡기면 새 계정에서 실패합니다 (아래 [2.5단계](#25단계-cdk-bootstrap-을-반드시-시키세요) 참고).
+Code Editor 에는 Node.js 가 기본 포함돼 있습니다 (검증 시 v20.19.6 / npm 11.18.0). 🚨 **`cdk bootstrap` 은 참가자가 직접, `deploy` 보다 먼저 해야 합니다** — 자동 처리에 맡기면 새 계정에서 실패합니다 (아래 [2.5단계](#25단계-cdk-bootstrap--create-직후-deploy-전에) 참고).
 
 ### ⚠️ `uv` — 공식 devguide 에 빠져 있는 전제조건
 
@@ -220,7 +220,7 @@ agentcore dev "천기단 화현 크림 성분 알려줘"
 
 > `--no-browser` 는 쓰지 마세요 — Code Editor 에서 `requires an interactive terminal` 로 실패합니다.
 
-### 🚨 2.5단계 `cdk bootstrap` 을 반드시 시키세요
+### 🚨 2.5단계 `cdk bootstrap` — `create` 직후, `deploy` 전에
 
 **Workshop Studio 계정은 항상 새 계정이라 bootstrap 이 없습니다.** `agentcore create`(2단계) 가 CDK 프로젝트를 만든 **직후**, `deploy` **전에** 시키세요 — 그전에는 `agentcore/cdk/` 가 없어 `cd` 자체가 실패합니다. `agentcore deploy -y` 의 자동 bootstrap 은 이 상태에서 실패하고(`CloudFormationStack object does not hold a stack`), 그 실패가 `CDKToolkit` 을 `ROLLBACK_COMPLETE` 껍데기로 남겨 **이후 모든 배포를 막습니다.** 복구는 10분+ 걸립니다.
 
