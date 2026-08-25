@@ -225,12 +225,12 @@ agentcore dev "천기단 화현 크림 성분 알려줘"
 **Workshop Studio 계정은 항상 새 계정이라 bootstrap 이 없습니다.** `agentcore create`(2단계) 가 CDK 프로젝트를 만든 **직후**, `deploy` **전에** 시키세요 — 그전에는 `agentcore/cdk/` 가 없어 `cd` 자체가 실패합니다. `agentcore deploy -y` 의 자동 bootstrap 은 이 상태에서 실패하고(`CloudFormationStack object does not hold a stack`), 그 실패가 `CDKToolkit` 을 `ROLLBACK_COMPLETE` 껍데기로 남겨 **이후 모든 배포를 막습니다.** 복구는 10분+ 걸립니다.
 
 ```bash
-cd ~/thewhoo-agentcore-workshop/agentcore/cdk
+cd ~/thewhoo-agentcore-workshop
 ACC=$(aws sts get-caller-identity --query Account --output text)
-node node_modules/aws-cdk/bin/cdk bootstrap aws://$ACC/us-east-1
+node agentcore/cdk/node_modules/aws-cdk/bin/cdk bootstrap aws://$ACC/us-east-1
 ```
 
-> ⚠️ **경로를 바꿔 안내하지 마세요.** `npx cdk` 는 출력 없이 조용히 종료되어 참가자가 "됐다" 고 착각하고, `./node_modules/.bin/cdk` 는 `Cannot find module .../dist/bin/cdk.js` 로 실패합니다 (둘 다 실측). **`node node_modules/aws-cdk/bin/cdk`** 만 쓰게 하세요.
+> ⚠️ **`agentcore/cdk` 로 들어가서 실행시키지 마세요.** 그 디렉터리의 `cdk.json` 이 `"app": "node dist/bin/cdk.js"` 를 지정하는데 `dist/` 는 빌드 전에 없어서 `Cannot find module` 로 실패합니다 (실측). **리포 루트에서** 위 명령 그대로 쓰게 하세요. `npx cdk` 도 금지 — 출력 없이 조용히 종료돼 참가자가 "됐다" 고 착각합니다.
 
 이미 깨진 참가자는 Lab 5 문서의 **"4단계 전에 — 배포가 실패할 때"** 절로 안내하세요. 여러 명이 동시에 겪으면 **계정 재발급**이 빠릅니다. 🚦 관문(`check-agentcore-config.sh`)이 bootstrap 상태까지 검사하므로, **관문을 지키게 하면 이 상황 자체가 생기지 않습니다.**
 
