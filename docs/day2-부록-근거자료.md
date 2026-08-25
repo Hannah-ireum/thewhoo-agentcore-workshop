@@ -98,3 +98,38 @@ bootstrap 은 ECR 리포지토리(`ContainerAssetsRepository`)와 SSM 파라미�
 | `execute_tool <도구명>` | 도구 실행 |
 
 `orchestrator` 나 `LLM` 이라는 이름의 span 은 **없습니다.** root span 은 `POST /invocations` (kind=SERVER) 입니다.
+
+## ground truth 필드의 적용 범위
+
+공식 [Ground truth evaluations](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/ground-truth-evaluations.html) 기준, 필드마다 scope 가 다릅니다.
+
+| 필드 | scope | 의미 |
+|---|---|---|
+| `assertions` | **Session** | 세션 전체에 대해 1건 채점 |
+| `expectedTrajectory` | **Session** | 세션 전체의 도구 호출 시퀀스 1건 |
+| `expectedResponse` | **Trace** | 특정 turn 의 답변 — 매핑 규칙이 호출 방식마다 다름 (아래) |
+
+### `expected_response` 매핑 — 두 문서를 구분해 읽어야 합니다
+
+| 사용 방식 | 매핑 규칙 | 출처 |
+|---|---|---|
+| **데이터셋 러너** (`--dataset`, `FileDatasetProvider`) | **위치 기반** — turn 0 → trace 0, turn 1 → trace 1 | [Dataset schema](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/dataset-evaluations-schema.html): *"Mapped positionally to the trace produced by this turn"* |
+| **Evaluate API 직접 호출** (`run-golden-eval.py`) | `traceId` 를 주면 그 trace, **없으면 세션의 마지막 trace** | [Ground truth evaluations](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/ground-truth-evaluations.html): *"String form — matched against the last trace in the session"* |
+
+러너는 turns 를 순서대로 실행하므로 위치 기반 매핑이 성립하고, API 를 직접 부를 때는 어느 trace 인지 알려줄 방법이 `traceId` 뿐입니다. **워크샵 스크립트는 후자**이므로 멀티턴에서 턴마다 정답을 채점하려면 turn 별 `traceId` 를 찾아 reference input 을 나눠야 합니다. (현재 골든셋은 전부 단일 턴 + `expected_response` 미사용이라 해당되지 않습니다.)
+
+**evaluator 가 안 쓰는 필드는 무시됩니다 — 에러가 아닙니다.** 응답의 `ignoredReferenceInputFields` 에 어떤 필드가 안 쓰였는지 보고되므로, reference input 을 한 번 만들어 여러 evaluator 에 재사용할 수 있습니다.
+
+## 골든셋 데이터셋 보관 방식 두 갈래
+
+같은 스키마를 쓰지만 보관 방식이 다릅니다. **워크샵은 B** 입니다.
+
+| | A. CLI 데이터셋 리소스 | B. 로컬 파일 (이 워크샵) |
+|---|---|---|
+| 파일 | `agentcore/datasets/<name>.jsonl` (**JSONL**) | `golden-set.json` (**단일 JSON**) |
+| 등록 | `agentcore add dataset --schema-type AGENTCORE_EVALUATION_PREDEFINED_V1` → `deploy` | 없음 |
+| 버전 관리 | 서비스가 관리 | git |
+| 로드 | `--dataset <name>` | `FileDatasetProvider(path)` |
+| 한도 | 요청당 예제 1,000개 · inline 5MB | 없음 |
+
+**왜 B 인가** — 골든셋을 **git 에 두고 코드와 함께 리뷰·버전 관리**하는 것이 회귀 테스트의 기본이고, PR 게이트에 그대로 붙습니다. A 는 여러 팀이 데이터셋을 공유하거나 서비스측 버전 이력이 필요할 때 유리합니다. 형식만 다르고 스키마는 같으므로 전환은 `scenarios` 배열을 한 줄씩 JSONL 로 풀어 쓰면 됩니다.
