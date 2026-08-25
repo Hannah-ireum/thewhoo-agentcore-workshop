@@ -5,7 +5,14 @@
 [project]
 name = "thewhoo-chat"
 version = "0.1.0"
-requires-python = ">=3.12"
+# ⚠️ 3.11 로 둡니다 (>=3.12 로 올리지 마세요).
+#    Code Editor 의 setup-python.sh 는 Python 3.11 을 씁니다. 여기가 >=3.12 면
+#    `agentcore dev` 가 내부에서 `uv venv` / `uv sync` 를 돌릴 때 프로젝트
+#    요구사항과 인터프리터가 어긋나 실패할 수 있습니다:
+#      ❌ Failed to create venv: unknown error
+#    배포 런타임(PYTHON_3_12)보다 낮은 하한이라 배포에는 문제 없습니다
+#    (하한이지 고정이 아님).
+requires-python = ">=3.11"
 dependencies = [
     # app.py 의 StrandsTelemetry().setup_otlp_exporter() 가 요구하는 것:
     # opentelemetry.exporter.otlp.proto.http (strands 1.52.0 소스 실측).
