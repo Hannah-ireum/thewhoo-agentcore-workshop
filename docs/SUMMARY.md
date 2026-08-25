@@ -25,3 +25,4 @@
 
 * [Streamlit UI 여는 법 (Code Editor)](streamlit-on-code-editor.md)
 * [환경변수 복구 (세션 끊겼을 때)](env-recovery.md)
+* [Lab 5 배포 트러블슈팅](lab5-트러블슈팅.md)
