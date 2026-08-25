@@ -211,16 +211,24 @@ agentcore dev "천기단 화현 크림 성분 알려줘"
 **참가자가 하는 세 가지 실수를 미리 막아주세요:**
 
 1. **`xdg-open ENOENT` 를 보고 `Ctrl+C` 로 끈다** — 서버는 떠 있습니다
-2. **`http://localhost:8081` 을 자기 브라우저에 넣는다** — 그 `localhost` 는 Code Editor 컨테이너 안입니다. **Day 1 Streamlit 처럼 PORTS 포워딩** 이 필요합니다 (`8501` → `8081` 만 다름). 이 비유를 쓰면 바로 이해합니다
+2. **웹 UI 를 Day 1 Streamlit 처럼 열려고 한다** — **안 열립니다.** `agentcore dev` UI 는 `127.0.0.1` 전용 바인드 + Host 헤더 allowlist(403) 두 겹이라 포워딩만으로는 `ECONNREFUSED 0.0.0.0:8081` 이 납니다. **UI 는 선택 사항으로 넘기고** `agentcore dev "<질문>"` CLI 로 확인시키세요. 굳이 보려면 `python3 scripts/uiproxy.py 8092 8081` 을 띄우고 **8092** 를 포워딩합니다 (터미널 3개 필요 — 시연에는 권하지 않습니다)
 3. **루트에서 `rm -rf .venv` 를 한다** — 워크샵 venv 가 지워집니다. 반드시 `src` 안인지 `pwd` 로 확인시키세요
 
 > `--no-browser` 는 쓰지 마세요 — Code Editor 에서 `requires an interactive terminal` 로 실패합니다.
 
-### 🚨 `CDK bootstrap failed` 가 나오면
+### 🚨 0단계 `cdk bootstrap` 을 반드시 먼저 시키세요
 
-앞선 실패로 `CDKToolkit` 스택이 깨진 것입니다. Lab 5 문서의 **"4단계 전에 — 배포가 실패할 때"** 절에 복구 절차가 있습니다 (ECR·S3·SSM 정리 → 스택 삭제 → `npx cdk bootstrap`).
+**Workshop Studio 계정은 항상 새 계정이라 bootstrap 이 없습니다.** `agentcore deploy -y` 의 자동 bootstrap 은 이 상태에서 실패하고(`CloudFormationStack object does not hold a stack`), 그 실패가 `CDKToolkit` 을 `ROLLBACK_COMPLETE` 껍데기로 남겨 **이후 모든 배포를 막습니다.** 복구는 10분+ 걸립니다.
 
-> **복구는 10분+ 걸립니다.** 여러 참가자가 동시에 겪으면 **Workshop Studio 계정을 새로 발급**하는 편이 빠릅니다. 🚦 관문을 지키면 이 상황이 생기지 않습니다.
+```bash
+cd ~/thewhoo-agentcore-workshop/agentcore/cdk
+ACC=$(aws sts get-caller-identity --query Account --output text)
+./node_modules/.bin/cdk bootstrap aws://$ACC/us-east-1
+```
+
+> ⚠️ **`npx cdk` 로 안내하지 마세요.** Code Editor 에서 출력 없이 조용히 종료되어 참가자가 "됐다" 고 착각합니다 (실측). `./node_modules/.bin/cdk` 를 직접 쓰게 하세요.
+
+이미 깨진 참가자는 Lab 5 문서의 **"4단계 전에 — 배포가 실패할 때"** 절로 안내하세요. 여러 명이 동시에 겪으면 **계정 재발급**이 빠릅니다. 🚦 관문(`check-agentcore-config.sh`)이 bootstrap 상태까지 검사하므로, **관문을 지키게 하면 이 상황 자체가 생기지 않습니다.**
 
 ### ⚠️ 진행자가 미리 알려줄 것 — `pyproject.toml`
 
