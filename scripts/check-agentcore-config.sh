@@ -151,6 +151,54 @@ else
   hint "Code Editor 터미널을 닫고 새로 열어 자격증명을 갱신하세요"
 fi
 
+# ── 8) CDK bootstrap 상태 ───────────────────────────────────────
+# deploy 는 CDK 로 수행되므로 리전에 CDKToolkit 스택이 있어야 합니다.
+# 없을 때 `agentcore deploy -y` 의 자동 bootstrap 은 **새 계정에서 실패**하고
+# (CloudFormationStack object does not hold a stack), 그 실패가 스택을
+# ROLLBACK_COMPLETE 껍데기로 남깁니다. 이 상태는 업데이트가 불가능해서
+# 이후 모든 deploy 가 같은 오류로 막힙니다 — 그래서 미리 잡습니다.
+REGION="${AWS_REGION:-us-east-1}"
+BS=$(aws cloudformation describe-stacks --stack-name CDKToolkit \
+      --region "${REGION}" --query 'Stacks[0].StackStatus' \
+      --output text 2>/dev/null)
+
+case "${BS}" in
+  CREATE_COMPLETE|UPDATE_COMPLETE|IMPORT_COMPLETE)
+    ok "CDK bootstrap 완료 (CDKToolkit=${BS})"
+    ;;
+  "")
+    bad "CDK bootstrap 이 안 돼 있습니다 (${REGION} 에 CDKToolkit 스택 없음)"
+    hint "이 상태로 agentcore deploy 를 돌리면 원인을 알 수 없는 오류가 납니다:"
+    hint "  CDK bootstrap failed: CloudFormationStack object does not hold a stack"
+    hint "게다가 실패 흔적이 ROLLBACK_COMPLETE 로 남아 이후 배포까지 막습니다."
+    hint ""
+    hint "해결 — 0단계를 먼저 실행하세요 (계정당 1회, 2~3분):"
+    hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
+    hint "  (cd agentcore/cdk && npx cdk bootstrap aws://\$ACC/${REGION} --require-approval never)"
+    ;;
+  ROLLBACK_COMPLETE|ROLLBACK_FAILED|DELETE_FAILED|*ROLLBACK_FAILED|CREATE_FAILED)
+    bad "CDKToolkit 스택이 '${BS}' 로 고착됐습니다 (배포 불가 상태)"
+    hint "이 상태의 스택은 업데이트가 안 되고 삭제만 됩니다."
+    hint "지우고 다시 bootstrap 하세요:"
+    hint "  aws cloudformation delete-stack --stack-name CDKToolkit --region ${REGION}"
+    hint "  aws cloudformation wait stack-delete-complete --stack-name CDKToolkit --region ${REGION}"
+    hint "  ACC=\$(aws sts get-caller-identity --query Account --output text)"
+    hint "  (cd agentcore/cdk && npx cdk bootstrap aws://\$ACC/${REGION} --require-approval never)"
+    hint ""
+    hint "삭제가 권한 부족으로 실패하면 (ecr:DeleteRepository / DeleteParameter),"
+    hint "CloudShell 에서 ./scripts/grant-sagemaker-permissions.sh 를 실행하세요."
+    ;;
+  *IN_PROGRESS)
+    bad "CDKToolkit 이 '${BS}' — 작업이 진행 중입니다"
+    hint "끝날 때까지 기다린 뒤 다시 실행하세요 (보통 2~3분)"
+    ;;
+  *)
+    bad "CDKToolkit 상태가 '${BS}' 입니다 (예상 밖)"
+    hint "aws cloudformation describe-stack-events --stack-name CDKToolkit \\"
+    hint "  --region ${REGION} --max-items 20 로 원인을 확인하세요"
+    ;;
+esac
+
 say ""
 say "==================================================================="
 if [ "${FAIL}" -eq 0 ]; then

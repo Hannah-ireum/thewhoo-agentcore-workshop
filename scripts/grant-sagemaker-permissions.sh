@@ -52,6 +52,17 @@ fi
 # 않고 그냥 무시하므로 조용히 무효가 됩니다 (SimulateCustomPolicy 로
 # implicitDeny 확인). bedrock:* / bedrock-agentcore:* 두 개가 실제로
 # 모든 호출을 커버하고 있었습니다.
+#
+# ecr:* / ssm:* 는 Day 2 Lab 5 의 `cdk bootstrap` 에 필요합니다 (실측).
+# bootstrap 은 CDKToolkit 스택으로 ECR 리포지토리(ContainerAssetsRepository)와
+# SSM 파라미터(CdkBootstrapVersion) 를 만듭니다. 이 두 권한이 없으면
+# bootstrap 이 실패한 뒤 롤백까지 실패해 스택이 DELETE_FAILED 로 고착되고,
+# 그 뒤 모든 deploy 가 "CloudFormationStack object does not hold a stack" 로
+# 막힙니다 — 원인 메시지가 전혀 알려주지 않아 디버깅이 매우 어렵습니다:
+#   ecr:DeleteRepository ... no identity-based policy allows
+#   Error occurred during operation 'DeleteParameter'   ← ssm 누락
+# cloudformation:* 만으로는 부족합니다. CFN 이 참가자 자격증명으로
+# 대상 서비스를 호출하기 때문에 대상 서비스 권한이 따로 필요합니다.
 # ────────────────────────────────────────────────────────────────
 POLICY_DOC=$(cat <<'EOF'
 {
@@ -67,6 +78,7 @@ POLICY_DOC=$(cat <<'EOF'
         "logs:*", "cloudwatch:*", "xray:*",
         "sts:GetCallerIdentity", "sts:AssumeRole",
         "s3:*",
+        "ecr:*", "ssm:*",
         "iam:CreateRole", "iam:DeleteRole", "iam:GetRole",
         "iam:PutRolePolicy", "iam:GetRolePolicy", "iam:DeleteRolePolicy",
         "iam:ListRolePolicies", "iam:AttachRolePolicy", "iam:DetachRolePolicy",
