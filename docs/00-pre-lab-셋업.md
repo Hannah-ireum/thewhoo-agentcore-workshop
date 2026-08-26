@@ -99,9 +99,11 @@ export KB_ID=<위에서 기억해둔 값>
 > 프롬프트에 `(.venv)` 가 보이면 정상입니다. 빠뜨리면 시스템에 깔린 구버전 strands 가
 > 잡혀 `ImportError: cannot import name 'CacheConfig'` 가 납니다 (에러 경로에 `/opt/conda`).
 
-> **Day 2 를 진행하실 분** — Lab 5 배포는 AgentCore CLI(npm 패키지)를 씁니다. Code Editor 에
-> Node.js 가 이미 있으니 버전만 확인해 두세요. `node --version` 이 **v20 이상**이면 됩니다.
-> CLI 설치는 Lab 5 에서 안내하고, `cdk bootstrap` 은 직접 하지 않아도 됩니다.
+> **Day 2 를 진행하실 분** — Lab 5 배포는 AgentCore CLI 를 씁니다. 이 CLI 는 **npm 패키지**입니다
+> (npm = Node.js 의 패키지 관리자, Python 의 `pip` 에 해당). **배포 도구만 Node 이고 에이전트
+> 코드는 그대로 Python** 입니다. Code Editor 에 Node.js 가 이미 있으니 버전만 확인해 두세요 —
+> `node --version` 이 **v20 이상**이면 됩니다.
+> CLI 설치와 `cdk bootstrap` 은 모두 Lab 5 에서 안내합니다.
 
 ## 여기까지 됐으면 성공
 
