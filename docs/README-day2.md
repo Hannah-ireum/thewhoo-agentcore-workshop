@@ -28,9 +28,36 @@ Day 1 에서 **로컬에서 동작하는 통합 챗봇** 을 만들었다면, Da
 
 Day 2 의 Lab 5-8 은 **Day 1 에서 만든 인프라(KB / Memory / Gateway / Mock Lambda)** 위에서 동작합니다. 시작 전에 어느 시나리오인지 확인하세요.
 
-> **Day 2 는 AgentCore CLI 를 사용합니다** — Lab 5 배포 도구가 npm 패키지(`@aws/agentcore`)로 바뀌었습니다.
-> CLI 설치는 Lab 5 에서 안내하며, `cdk bootstrap` 은 직접 하지 않아도 됩니다.
+> **Day 2 는 AgentCore CLI 를 사용합니다** — Lab 5 배포 도구가 `@aws/agentcore` 로 바뀌었습니다.
+> CLI 설치는 Lab 5 에서 안내합니다. 🚨 **`cdk bootstrap` 은 직접 해야 합니다** (Lab 5 의 2.5단계).
 > 이전 워크샵의 Python starter-toolkit 과의 차이는 [새 CLI 이전 가이드](새-cli-이전-가이드.md) 참고.
+>
+> <details>
+> <summary><strong>"npm 패키지" 가 무슨 뜻인가요?</strong> (Node.js 가 낯설다면)</summary>
+>
+> **npm** 은 **Node.js 의 패키지 관리자**입니다 — Python 의 `pip` 와 같은 역할입니다.
+>
+> | Python | Node.js | 하는 일 |
+> |---|---|---|
+> | `pip` | **`npm`** | 패키지 설치 도구 |
+> | PyPI | npm registry | 패키지 저장소 |
+> | `pip install -U boto3` | `npm install -g @aws/agentcore` | 설치 명령 |
+> | `requirements.txt` | `package.json` | 의존성 선언 파일 |
+>
+> 즉 **"CLI 가 npm 패키지" = 그 명령줄 도구가 Node.js 로 만들어져서 `npm` 으로 설치한다**는 뜻입니다.
+>
+> **Q. Python 워크샵인데 왜 Node 도구인가요?**
+> **CLI(배포 도구)만** Node 입니다. 여러분이 작성하는 **에이전트 코드는 그대로 Python** 입니다. CLI 가 내부적으로 AWS CDK(Node 로 만들어진 인프라 도구)를 쓰기 때문에 같은 생태계로 배포됩니다. 이전 버전은 Python 도구(`pip install bedrock-agentcore-starter-toolkit`)였는데, AWS 가 이것을 legacy 로 표기하고 새 CLI 로 옮겼습니다.
+>
+> **Q. Node.js 를 따로 설치해야 하나요?**
+> 아니요. Code Editor 에 **이미 설치돼 있습니다** (검증 시 Node v20.19.6 / npm 11.18.0). 아래 확인 명령으로 버전만 보면 됩니다.
+>
+> **Q. `-g` 는 뭔가요?**
+> `global` — 이 프로젝트만이 아니라 **어디서든 `agentcore` 명령을 쓸 수 있게** 설치합니다. `pip install --user` 와 비슷한 개념입니다.
+>
+> ⚠️ **`sudo npm install -g` 는 쓰지 마세요.** root 소유 파일이 생겨 이후 재설치·업데이트가 막힙니다. Pre-Lab 의 `setup-python.sh` 가 설치 경로를 홈(`~/.npm-global`)으로 바꿔두므로 `sudo` 가 필요 없습니다.
+>
+> </details>
 >
 > **시작 전 두 도구를 확인하세요:**
 > ```bash
